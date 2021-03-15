@@ -1,9 +1,20 @@
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.4.0
-  hooks:
-    - id: check-yaml
-    - id: end-of-file-fixer
-    - id: trailing-whitespace
-    - id: flake8
-    - id: black
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/psf/black
+    rev: 20.8b1 # Replace by any tag/version: https://github.com/psf/black/tags
+    hooks:
+      - id: black
+        language_version: python3 # Should be a command that runs python3.6+      -
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.10.0
+    hooks:
+      - id: pyupgrade
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 'master'  # pick a git hash / tag to point to
+    hooks:
+      - id: flake8
