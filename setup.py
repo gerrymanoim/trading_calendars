@@ -44,6 +44,7 @@ reqs = [
     "pandas>=1.0",
     "pyluach",
     "python-dateutil",
+    "numba",
     "pytz",
     "toolz",
 ]
@@ -76,9 +77,14 @@ if __name__ == "__main__":
                 "flake8",
                 "pytest",
                 "pytest-benchmark",
+                "coverage",
+                "pytest-cov",
                 "parameterized",
                 "pytest-xdist",
                 "pip-tools",
+                "black",
+                "hypothesis[numpy,pandas,pytz,dateutil,codemods,cli]",
             ],
+            "docs": ["mkdocs-material"],
         },
     )
