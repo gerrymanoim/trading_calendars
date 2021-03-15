@@ -81,12 +81,12 @@ su ${USERNAME} -c "$(cat << EOF
     # Do not update profile - we'll do this manually
     export PROFILE=/dev/null
 
-    curl -so- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash 
+    curl -so- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
     source ${NVM_DIR}/nvm.sh
     if [ "${NODE_VERSION}" != "" ]; then
         nvm alias default ${NODE_VERSION}
     fi
-    nvm clear-cache 
+    nvm clear-cache
 EOF
 )" 2>&1
 
@@ -113,7 +113,7 @@ fi
 [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
 [ -s "\$NVM_DIR/bash_completion" ] && . "\$NVM_DIR/bash_completion"
 EOF
-) | tee -a /etc/bash.bashrc >> /etc/zsh/zshrc 
-fi 
+) | tee -a /etc/bash.bashrc >> /etc/zsh/zshrc
+fi
 
 echo "Done!"

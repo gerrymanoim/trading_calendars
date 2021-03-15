@@ -40,9 +40,7 @@ class AlwaysOpenTestCase(ExchangeCalendarTestBase, TestCase):
 
     def test_open_every_minute(self):
         cal = self.calendar
-        minutes = pd.date_range(
-            "2016-02-01", "2016-02-28 23:59:00", freq="min", tz=UTC
-        )
+        minutes = pd.date_range("2016-02-01", "2016-02-28 23:59:00", freq="min", tz=UTC)
         cal_minutes = cal.minutes_for_sessions_in_range(
             pd.Timestamp("2016-02-01", tz=UTC),
             pd.Timestamp("2016-02-28", tz=UTC),
