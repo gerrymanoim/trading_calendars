@@ -46,6 +46,7 @@ reqs = [
     "python-dateutil",
     "pytz",
     "toolz",
+    "korean_lunar_calendar",
 ]
 
 with open("README.md") as f:
