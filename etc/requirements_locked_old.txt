@@ -6,10 +6,14 @@
 #
 apipkg==1.5
     # via execnet
+atomicwrites==1.4.0
+    # via pytest
 attrs==20.3.0
     # via pytest
 click==7.1.2
     # via pip-tools
+colorama==0.4.4
+    # via pytest
 execnet==1.7.1
     # via pytest-xdist
 flake8==3.8.4
@@ -24,7 +28,7 @@ numpy==1.19.5
     #   pandas
 packaging==20.8
     # via pytest
-pandas==1.0.5
+pandas==1.1.0
     # via -r requirements.in
 parameterized==0.8.1
     # via -r requirements_dev.in
@@ -67,8 +71,7 @@ pytz==2020.5
     #   -r requirements.in
     #   pandas
 six==1.15.0
-    # via
-    #   python-dateutil
+    # via python-dateutil
 toml==0.10.2
     # via pytest
 toolz==0.11.1
