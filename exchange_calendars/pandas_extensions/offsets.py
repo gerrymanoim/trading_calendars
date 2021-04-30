@@ -8,9 +8,6 @@ import numpy as np
 import pandas as pd
 
 from pandas.tseries.offsets import CustomBusinessDay
-
-# import from here until the following PR gets published:
-# https://github.com/pandas-dev/pandas/pull/34062
 from pandas._libs.tslibs.offsets import apply_wraps
 
 
