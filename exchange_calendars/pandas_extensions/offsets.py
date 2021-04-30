@@ -7,11 +7,11 @@ import toolz
 import numpy as np
 import pandas as pd
 
-from pandas.tseries.offsets import BusinessDay, CustomBusinessDay
-from pandas._libs.tslibs.offsets import (  # pylint: disable=no-name-in-module
-    Tick,
-    apply_wraps,
-)
+from pandas.tseries.offsets import CustomBusinessDay
+
+# import from here until the following PR gets published:
+# https://github.com/pandas-dev/pandas/pull/34062
+from pandas._libs.tslibs.offsets import apply_wraps
 
 
 class CompositeCustomBusinessDay(CustomBusinessDay):
@@ -161,15 +161,8 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
                 )
                 result = bday.apply(other)
             return result
-        elif isinstance(other, timedelta) or isinstance(other, Tick):
-            return BusinessDay(
-                self.n, offset=self.offset + other, normalize=self.normalize
-            )
         else:
-            raise TypeError(
-                "Only know how to combine trading day with "
-                "datetime, datetime64 or timedelta."
-            )
+            return super().apply(other)
 
 
 def _to_dt64D(dt):
