@@ -69,7 +69,9 @@ class XHKGCalendarTestCase(ExchangeCalendarTestBase, TestCase):
         )
         self.assertEqual(
             current_session_label,
-            self.calendar.minute_to_session_label(mid_break_minute, direction="previous"),
+            self.calendar.minute_to_session_label(
+                mid_break_minute, direction="previous"
+            ),
         )
         self.assertEqual(
             current_session_label,

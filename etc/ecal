@@ -4,18 +4,18 @@ from __future__ import print_function
 import sys
 
 months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ]
 
 
@@ -36,43 +36,43 @@ def _render_month(calendar, year, month, print_year):
 
         out = io.StringIO()
 
-    start = '{year}-{month}'.format(year=year, month=month)
+    start = "{year}-{month}".format(year=year, month=month)
     if month == 12:
-        end = '{year}-{month}'.format(year=year + 1, month=1)
+        end = "{year}-{month}".format(year=year + 1, month=1)
     else:
-        end = '{year}-{month}'.format(year=year, month=month + 1)
+        end = "{year}-{month}".format(year=year, month=month + 1)
 
-    days = pd.date_range(start, end, closed='left', utc=True)
+    days = pd.date_range(start, end, closed="left", utc=True)
 
     title = months[month - 1]
     if print_year:
-        title += ' {year}'.format(year=year)
+        title += " {year}".format(year=year)
 
-    print('{title:^28}'.format(title=title).rstrip(), file=out)
-    print(' Su  Mo  Tu  We  Th  Fr  Sa', file=out)
+    print("{title:^28}".format(title=title).rstrip(), file=out)
+    print(" Su  Mo  Tu  We  Th  Fr  Sa", file=out)
     print(
-        ' ' * (4 * ((days[0].weekday() + 1) % 7)),
-        end='',
+        " " * (4 * ((days[0].weekday() + 1) % 7)),
+        end="",
         file=out,
     )
 
     for d in days:
         if d.weekday() == 6:
-            print('', file=out)
+            print("", file=out)
 
         if calendar.is_session(d):
-            a = b = ' '
+            a = b = " "
         else:
-            a = '['
-            b = ']'
+            a = "["
+            b = "]"
 
         print(
-            '{a}{d.day:>2}{b}'.format(a=a, d=d, b=b),
-            end='',
+            "{a}{d.day:>2}{b}".format(a=a, d=d, b=b),
+            end="",
             file=out,
         )
 
-    print('', file=out)
+    print("", file=out)
     return out.getvalue()
 
 
@@ -82,7 +82,7 @@ def _concat_lines(strings, width):
     for lines in as_lines:
         missing_lines = max_lines - len(lines)
         if missing_lines:
-            lines.extend([' ' * width] * missing_lines)
+            lines.extend([" " * width] * missing_lines)
 
     rows = []
     for row_parts in zip(*as_lines):
@@ -90,24 +90,24 @@ def _concat_lines(strings, width):
         for n, row_part in enumerate(row_parts):
             missing_space = width - len(row_part)
             if missing_space:
-                row_parts[n] = row_part + ' ' * missing_space
+                row_parts[n] = row_part + " " * missing_space
 
-        rows.append('   '.join(row_parts))
+        rows.append("   ".join(row_parts))
 
-    return '\n'.join(row.rstrip() for row in rows)
+    return "\n".join(row.rstrip() for row in rows)
 
 
 def _int_arg(v, name):
     try:
         return int(v)
     except ValueError:
-        error('%s must be an integer, got: %r' % (name, v))
+        error("%s must be an integer, got: %r" % (name, v))
 
 
 def parse_args(argv):
-    usage = 'usage: %s CALENDAR [[[DAY] MONTH] YEAR]' % argv[0]
+    usage = "usage: %s CALENDAR [[[DAY] MONTH] YEAR]" % argv[0]
 
-    if len(argv) == 1 or '--help' in argv or '-h' in argv:
+    if len(argv) == 1 or "--help" in argv or "-h" in argv:
         error(usage)
 
     if len(argv) > 1:
@@ -125,11 +125,11 @@ def parse_args(argv):
         year = now.year
         month = now.month
     elif len(argv) == 3:
-        year = _int_arg(argv[2], 'YEAR')
+        year = _int_arg(argv[2], "YEAR")
         month = None
     elif len(argv) == 4:
-        month = _int_arg(argv[2], 'MONTH')
-        year = _int_arg(argv[3], 'YEAR')
+        month = _int_arg(argv[2], "MONTH")
+        year = _int_arg(argv[3], "YEAR")
     else:
         error(usage)
 
@@ -157,9 +157,9 @@ def main(argv):
             ]
             for row in range(4)
         ]
-        print('{year:^88}\n'.format(year=year).rstrip())
-        print('\n\n'.join(_concat_lines(cs, 28) for cs in month_strings))
+        print("{year:^88}\n".format(year=year).rstrip())
+        print("\n\n".join(_concat_lines(cs, 28) for cs in month_strings))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)

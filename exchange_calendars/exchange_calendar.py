@@ -1129,7 +1129,12 @@ class ExchangeCalendar(ABC):
         ad_hoc_dates,
         start_date,
         end_date,
+        strict=False,
     ):
+        # Short circuit when nothing to apply.
+        if opens_or_closes is None or not len(opens_or_closes):
+            return
+
         len_m, len_oc = len(session_labels), len(opens_or_closes)
         if len_m != len_oc:
             raise ValueError(
@@ -1169,9 +1174,9 @@ class ExchangeCalendar(ABC):
         # -1 indicates that no corresponding entry was found.  If any -1s are
         # present, then we have special dates that doesn't correspond to any
         # trading day.
-        if -1 in indexer:
+        if -1 in indexer and strict:
             bad_dates = list(offsets.index[indexer == -1])
-            _e = ValueError("Special dates %s are not trading days." % bad_dates)
+            raise ValueError("Special dates %s are not trading days." % bad_dates)
 
         special_opens_or_closes = opens_or_closes[indexer] + offsets
 

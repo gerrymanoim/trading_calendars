@@ -20,7 +20,7 @@ from pandas.tseries.holiday import (
     GoodFriday,
     Holiday,
     previous_friday,
-    previous_workday
+    previous_workday,
 )
 from pytz import timezone
 

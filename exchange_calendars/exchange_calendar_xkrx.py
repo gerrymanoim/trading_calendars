@@ -110,7 +110,7 @@ class XKRXExchangeCalendar(ExchangeCalendar):
     # 2000-05-22: 0900~1500
     # 2016-08-01: 0900~1530
 
-    # Break time disappears since 2000-05-02
+    # Break time disappears since 2000-05-22
     # https://www.donga.com/news/Economy/article/all/20000512/7534650/1
 
     # Closing time became 30mins late since 2016-08-01
