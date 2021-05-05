@@ -136,5 +136,33 @@ class XKRXCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
         expected_hangeul_day = T("2013-10-09")
         unexpected_hangeul_day = T("2012-10-09")
 
-        self.assertTrue(expected_hangeul_day not in self.calendar.all_sessions)
-        self.assertTrue(unexpected_hangeul_day in self.calendar.all_sessions)
+        self.assertNotIn(expected_hangeul_day, self.calendar.all_sessions)
+        self.assertIn(unexpected_hangeul_day, self.calendar.all_sessions)
+
+    def test_historical_regular_holidays_fall_into_precomputed_holidays(self):
+        from pandas import DatetimeIndex
+
+        precomputed_holidays = DatetimeIndex(self.calendar.adhoc_holidays)
+
+        # precomputed holidays won't include weekends (saturday, sunday)
+        self.assertTrue(all(d.weekday() < 5 for d in precomputed_holidays))
+
+        generated_holidays = self.calendar.regular_holidays.holidays(
+            precomputed_holidays.min(), precomputed_holidays.max(), return_name=True
+        )
+
+        # generated holidays include weekends
+        self.assertFalse(all(d.weekday() < 5 for d in generated_holidays.index))
+
+        # filter non weekend generated holidays
+        non_weekend_mask = DatetimeIndex(
+            [d for d in generated_holidays.index if d.weekday() < 5]
+        )
+        non_weekend_generated_holidays = generated_holidays[non_weekend_mask]
+
+        # generated holidays should generally fall into one of the precomputed holidays
+        # except the future holidays that are not precomputed yet
+        isin = non_weekend_generated_holidays.index.isin(precomputed_holidays)
+        missing = non_weekend_generated_holidays[~isin]
+
+        self.assertTrue(all(isin), "missing holidays = \n%s" % missing)

@@ -1113,7 +1113,12 @@ IndependenceMovementDay = KoreanSolarHoliday(
     "Independence Movement Day", month=3, day=1
 )
 BuddhasBirthday = KoreanLunarHoliday("Buddha's Birthday", month=4, day=8)
-LoborDay = KoreanSolarHoliday("Labor Day", month=5, day=1)
+OldLaborDay = KoreanSolarHoliday(
+    "Labor Day", month=3, day=10, end_date=pd.Timestamp(1993, 12, 31)
+)
+LoborDay = KoreanSolarHoliday(
+    "Labor Day", month=5, day=1, start_date=pd.Timestamp(1994, 1, 1)
+)  # Labor day changed it's day from 03/10 to 05/01 since 1994
 ChildrensDay = KoreanSolarHoliday(
     "Children's Day", month=5, day=5, observance=childrens_day_alternative_holiday
 )
@@ -1154,6 +1159,7 @@ korean_non_alternative_regular_holiday_rules = [
     NewYearsDay,
     IndependenceMovementDay,
     BuddhasBirthday,
+    OldLaborDay,
     LoborDay,
     MemorialDay,
     NationalLiberationDay,
