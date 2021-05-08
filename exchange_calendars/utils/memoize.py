@@ -5,7 +5,7 @@ TODO - get rid of this when 3.8 is the min supported version and we can use
 from weakref import WeakKeyDictionary
 
 
-class lazyval(object):
+class lazyval(property):
     """Decorator that marks that an attribute of an instance should not be
     computed until needed, and that the value should be memoized.
 

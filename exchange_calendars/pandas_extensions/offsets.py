@@ -114,18 +114,25 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
             self.offset,
         )
 
-    def _custom_business_day_for(self, other, n, is_edge=False):
+    def _custom_business_day_for(
+        self, other, n=None, is_edge=False, with_interval=False
+    ):
         loc = self._business_days_all_index.get_loc(other)
-        if is_edge:
+        if is_edge and n is not None:
             loc += np.sign(n)
         interval = self._business_days_all_index[loc]
         try:
             loc = self._business_days_index.get_loc(interval.left)
         except KeyError:
-            bday = self._as_custom_business_day().base * n
+            bday = self._as_custom_business_day()
         else:
-            bday = self._business_days[loc][-1].base * n
-        return bday, interval
+            bday = self._business_days[loc][-1]
+        if n is not None:
+            bday = bday.base * n
+        if with_interval:
+            return bday, interval
+        else:
+            return bday
 
     def _moved(self, from_date, to_date, bday):
         return np.busday_count(
@@ -139,7 +146,9 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
         if isinstance(other, datetime):
             moved = 0
             remaining = self.n - moved
-            bday, interval = self._custom_business_day_for(other, remaining)
+            bday, interval = self._custom_business_day_for(
+                other, remaining, with_interval=True
+            )
             result = bday.apply(other)
             while not interval.left <= result <= interval.right:
                 previous_other = other
@@ -154,12 +163,28 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
                 if remaining == 0:
                     break
                 bday, interval = self._custom_business_day_for(
-                    other, remaining, is_edge=True
+                    other, remaining, is_edge=True, with_interval=True
                 )
                 result = bday.apply(other)
             return result
         else:
             return super().apply(other)
+
+    def is_on_offset(self, dt):
+        if self.normalize and not _is_normalized(dt):
+            return False
+        day64 = _to_dt64D(dt)
+        bday = self._custom_business_day_for(day64)
+        return np.is_busday(day64, busdaycal=bday.calendar)
+
+
+def _is_normalized(dt):
+    if dt.hour != 0 or dt.minute != 0 or dt.second != 0 or dt.microsecond != 0:
+        # Regardless of whether dt is datetime vs Timestamp
+        return False
+    if isinstance(dt, pd.Timestamp):
+        return dt.nanosecond == 0
+    return True
 
 
 def _to_dt64D(dt):
@@ -170,9 +195,7 @@ def _to_dt64D(dt):
     if getattr(dt, "tzinfo", None) is not None:
         # Get the nanosecond timestamp,
         # equiv `Timestamp(dt).value` or `dt.timestamp() * 10**9`
-        nanos = getattr(dt, "nanosecond", 0)
-        i8 = pd.Timestamp(dt, tz=None, nanosecond=nanos)
-        dt = i8.tz_localize("UTC").tz_convert(dt.tzinfo).value
+        dt = pd.Timestamp(dt).value
         dt = np.int64(dt).astype("datetime64[ns]")
     else:
         dt = np.datetime64(dt)

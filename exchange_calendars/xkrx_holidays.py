@@ -8,6 +8,7 @@ from .pandas_extensions.korean_holiday import (
     KoreanLunarHoliday,
     alternative_holiday,
     childrens_day_alternative_holiday,
+    last_business_day,
 )
 
 # Original precomputed KRX holidays
@@ -170,6 +171,8 @@ original_precomputed_krx_holidays = pd.to_datetime(
         "1995-12-29",
         "1996-01-01",
         "1996-01-02",
+        "1996-02-19",
+        "1996-02-20",
         "1996-03-01",
         "1996-04-05",
         "1996-05-01",
@@ -185,7 +188,9 @@ original_precomputed_krx_holidays = pd.to_datetime(
         "1996-12-31",
         "1997-01-01",
         "1997-02-07",
+        "1997-05-01",
         "1997-05-05",
+        "1997-05-14",
         "1997-06-06",
         "1997-07-17",
         "1997-08-15",
@@ -193,6 +198,7 @@ original_precomputed_krx_holidays = pd.to_datetime(
         "1997-09-16",
         "1997-09-17",
         "1997-10-03",
+        "1997-12-18",
         "1997-12-25",
         "1997-12-30",
         "1997-12-31",
@@ -1088,41 +1094,74 @@ precomputed_krx_holidays = original_precomputed_krx_holidays.union(
 
 
 # Korean regular holidays
-NewYearsDay = KoreanSolarHoliday("New Years Day", month=1, day=1)
+NewYearsDay = KoreanSolarHoliday(
+    "New Years Day", month=1, day=1
+)  # New years day previously had 2 additional following holidays
+NewYearsDayAfter = KoreanSolarHoliday(
+    "New Years Day (+1 day)",
+    month=1,
+    day=1,
+    offset=Day(1),
+    end_date=pd.Timestamp("1998-12-31"),
+)  # This was also removed since 1999
+NewYearsDayAfterAfter = KoreanSolarHoliday(
+    "New Years Day (+2 day)",
+    month=1,
+    day=1,
+    offset=Day(2),
+    end_date=pd.Timestamp("1989-12-31"),
+)  # The last additional holiday was removed after Seollal gained additional before/after holidays in 1989
 SeollalBefore = KoreanLunarHoliday(
     "Seollal (New Year's Day by the lunar) (-1 day)",
     month=1,
     day=1,
     offset=Day(-1),
     observance=alternative_holiday,
-)
+    start_date=pd.Timestamp("1989-01-01"),
+)  # Seollal gained additional before/after holidays since 1989
 Seollal = KoreanLunarHoliday(
     "Seollal (New Year's Day by the lunar)",
     month=1,
     day=1,
     observance=alternative_holiday,
-)
+    start_date=pd.Timestamp("1985-01-01"),
+)  # Seollal newly became holiday since 1985
 SeollalAfter = KoreanLunarHoliday(
     "Seollal (New Year's Day by the lunar) (+1 day)",
     month=1,
     day=1,
     offset=Day(1),
     observance=alternative_holiday,
-)
+    start_date=pd.Timestamp("1989-01-01"),
+)  # Seollal gained additional before/after holidays since 1989
 IndependenceMovementDay = KoreanSolarHoliday(
     "Independence Movement Day", month=3, day=1
 )
+ArborDay = KoreanSolarHoliday(
+    "Arbor Day",
+    month=4,
+    day=5,
+    start_date=pd.Timestamp("1948-01-01"),
+    end_date=pd.Timestamp("2005-12-31"),
+)  # Arbor day was holiday from 1948 to 2005
 BuddhasBirthday = KoreanLunarHoliday("Buddha's Birthday", month=4, day=8)
 OldLaborDay = KoreanSolarHoliday(
-    "Labor Day", month=3, day=10, end_date=pd.Timestamp(1993, 12, 31)
+    "Labor Day", month=3, day=10, end_date=pd.Timestamp("1993-12-31")
 )
 LoborDay = KoreanSolarHoliday(
-    "Labor Day", month=5, day=1, start_date=pd.Timestamp(1994, 1, 1)
+    "Labor Day", month=5, day=1, start_date=pd.Timestamp("1994-01-01")
 )  # Labor day changed it's day from 03/10 to 05/01 since 1994
 ChildrensDay = KoreanSolarHoliday(
     "Children's Day", month=5, day=5, observance=childrens_day_alternative_holiday
 )
 MemorialDay = KoreanSolarHoliday("Memorial Day", month=6, day=6)
+ConstitutionDay = KoreanSolarHoliday(
+    "Constitution Day",
+    month=7,
+    day=17,
+    start_date=pd.Timestamp("1949-10-01"),
+    end_date=pd.Timestamp("2007-12-31"),
+)  # Constitution day was holiday from 1949 to 2007
 NationalLiberationDay = KoreanSolarHoliday("National Liberation Day", month=8, day=15)
 ChuseokBefore = KoreanLunarHoliday(
     "Chuseok (Korean Thanksgiving Day) (-1 day)",
@@ -1130,46 +1169,77 @@ ChuseokBefore = KoreanLunarHoliday(
     day=15,
     offset=Day(-1),
     observance=alternative_holiday,
-)
+    start_date=pd.Timestamp("1989-01-01"),
+)  # Chuseok gained additional before holiday since 1989, along with Seollal
 Chuseok = KoreanLunarHoliday(
-    "Chuseok (Korean Thanksgiving Day)", month=8, day=15, observance=alternative_holiday
-)
+    "Chuseok (Korean Thanksgiving Day)",
+    month=8,
+    day=15,
+    observance=alternative_holiday,
+    start_date=pd.Timestamp("1949-01-01"),
+)  # Chuseok originally had no before/after holidays
 ChuseokAfter = KoreanLunarHoliday(
     "Chuseok (Korean Thanksgiving Day) (+1 day)",
     month=8,
     day=15,
     offset=Day(1),
     observance=alternative_holiday,
-)
+    start_date=pd.Timestamp("1986-01-01"),
+)  # Chuseok gained additional following holiday since 1986
+ArmedForcesDay = KoreanSolarHoliday(
+    "Armed Forces Day",
+    month=10,
+    day=1,
+    start_date=pd.Timestamp("1976-01-01"),
+    end_date=pd.Timestamp("1990-12-31"),
+)  # Armed forces day was holiday from 1976 to 1990
 KoreanNationalFoundationDay = KoreanSolarHoliday(
     "Korean National Foundation Day", month=10, day=3
 )
+OldHangulProclamationDay = KoreanSolarHoliday(
+    "Hangul Proclamation Day",
+    month=10,
+    day=9,
+    start_date=pd.Timestamp("1949-01-01"),
+    end_date=pd.Timestamp("1990-12-31"),
+)  # Hangul Day was once excluded from national holidays in 1991
 HangulProclamationDay = KoreanSolarHoliday(
-    "Hangul Proclamation Day", month=10, day=9, start_date=pd.Timestamp(2013, 1, 1)
-)  # Hangeul Day became a national holiday in 2013
+    "Hangul Proclamation Day",
+    month=10,
+    day=9,
+    start_date=pd.Timestamp("2013-01-01"),
+)  # Hangeul Day became national holiday again in 2013
 Christmas = KoreanSolarHoliday("Christmas", month=12, day=25)
 
 # KRX specific additional regular holiday
-#  Should not be a KoreanSolarHoliday in order to prevent this day being registered
-#  into computed national holiday cache for the alternative holiday behavior.
-EndOfYearHoliday = Holiday("End of Year Holiday", month=12, day=31)
+# should not be a KoreanSolarHoliday in order to prevent this day being registered
+# into computed national holiday cache for the alternative holiday behavior.
+EndOfYearHoliday = Holiday(
+    "End of Year Holiday", month=12, day=31, observance=last_business_day
+)
 
 # Holidays that cannot apply alternative holiday rule
-korean_non_alternative_regular_holiday_rules = [
+korean_regular_holiday_rules_without_alternative_holiday_rule = [
     NewYearsDay,
+    NewYearsDayAfter,
+    NewYearsDayAfterAfter,
     IndependenceMovementDay,
+    ArborDay,
     BuddhasBirthday,
     OldLaborDay,
     LoborDay,
     MemorialDay,
+    ConstitutionDay,
     NationalLiberationDay,
+    ArmedForcesDay,
     KoreanNationalFoundationDay,
+    OldHangulProclamationDay,
     HangulProclamationDay,
     Christmas,
 ]
 
 # Holidays that can apply alternative holiday rule
-korean_alternative_regular_holiday_rules = [
+korean_regular_holiday_rules_with_alternative_holiday_rule = [
     Seollal,
     SeollalAfter,
     SeollalBefore,
@@ -1182,8 +1252,8 @@ korean_alternative_regular_holiday_rules = [
 # Here we are trying to calculate non alternative holidays first
 # and then calculate the alternative holidays later
 korean_regular_holiday_rules = (
-    korean_non_alternative_regular_holiday_rules
-    + korean_alternative_regular_holiday_rules
+    korean_regular_holiday_rules_without_alternative_holiday_rule
+    + korean_regular_holiday_rules_with_alternative_holiday_rule
 )
 
 # Additional regular holidays for KRX

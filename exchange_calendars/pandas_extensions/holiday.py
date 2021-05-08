@@ -6,14 +6,15 @@ from pandas.tseries.holiday import (
     Holiday as PandasHoliday,
     AbstractHolidayCalendar as PandasAbstractHolidayCalendar,
 )
-
+from pandas.tseries.offsets import BaseOffset
 from pandas import (
     DatetimeIndex,
     Series,
     Timestamp,
 )
-
 from pandas.errors import PerformanceWarning
+
+from .offsets import _is_normalized
 
 
 class Holiday(PandasHoliday):
@@ -33,6 +34,7 @@ class Holiday(PandasHoliday):
         start_date=None,
         end_date=None,
         days_of_week=None,
+        tz=None,
     ):
         super().__init__(
             name,
@@ -45,18 +47,47 @@ class Holiday(PandasHoliday):
             end_date,
             days_of_week,
         )
-        self.name = name
-        self.year = year
-        self.month = month
-        self.day = day
         self.offset = offset
-        self.start_date = (
-            Timestamp(start_date) if start_date is not None else start_date
-        )
-        self.end_date = Timestamp(end_date) if end_date is not None else end_date
         self.observance = observance
-        assert days_of_week is None or type(days_of_week) == tuple
-        self.days_of_week = days_of_week
+        self.tz = tz
+        if self.start_date is not None:
+            if self.tz is None and self.start_date.tz is not None:
+                self.tz = start_date.tz
+            if self.start_date.tz is None and self.tz is not None:
+                self.start_date = self.start_date.tz_localize(self.tz)
+            assert self.tz == self.start_date.tz
+        if self.end_date is not None:
+            if self.tz is None and self.end_date.tz is not None:
+                self.tz = start_date.tz
+            if self.end_date.tz is None and self.tz is not None:
+                self.end_date = self.end_date.tz_localize(self.tz)
+            assert self.tz == self.end_date.tz
+        if self.start_date is not None and self.end_date is not None:
+            self.start_date.tz == self.end_date.tz
+
+    def __repr__(self) -> str:
+        info = ""
+        if self.year is not None:
+            info += f"year={self.year}, "
+        info += f"month={self.month}, day={self.day}"
+
+        if self.offset is not None:
+            info += f", offset={self.offset}"
+
+        if self.observance is not None:
+            info += f", observance={self.observance}"
+
+        repr = f"{self.__class__.__name__}: {self.name} ({info})"
+        return repr
+
+    def dates(self, start_date, end_date, return_name=False):
+        start_date = Timestamp(start_date)
+        end_date = Timestamp(end_date)
+        assert start_date.tz == self.tz
+        assert _is_normalized(start_date)
+        assert end_date.tz == self.tz
+        assert _is_normalized(end_date)
+        return super().dates(start_date, end_date, return_name=return_name)
 
     def _apply_offset(self, dates):
         if self.offset is not None:
@@ -65,7 +96,6 @@ class Holiday(PandasHoliday):
             else:
                 offsets = self.offset
             for offset in offsets:
-
                 # If we are adding a non-vectorized value
                 # ignore the PerformanceWarnings:
                 with warnings.catch_warnings():
@@ -75,7 +105,19 @@ class Holiday(PandasHoliday):
 
     def _apply_observance(self, dates):
         if self.observance is not None:
-            dates = dates.map(self.observance)
+            if not isinstance(self.observance, list):
+                observances = [self.observance]
+            else:
+                observances = self.observance
+            for observance in observances:
+                if isinstance(observance, BaseOffset):
+                    offset = observance
+
+                    def f(d):
+                        return d + offset
+
+                    observance = f
+                dates = dates.map(observance)
         return dates
 
     def _apply_rule(self, dates, apply_offset=True, apply_observance=True):

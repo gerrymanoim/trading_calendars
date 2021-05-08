@@ -18,7 +18,7 @@ from datetime import time
 import pandas as pd
 
 from pytz import timezone, UTC
-from pandas.tseries.holiday import Holiday, next_monday
+from pandas.tseries.holiday import Holiday
 
 from .exchange_calendar import ExchangeCalendar, HolidayCalendar, end_default
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
@@ -28,10 +28,11 @@ from .xkrx_holidays import (
     precomputed_krx_holidays,
     precomputed_csat_days,
 )
+from .pandas_extensions.korean_holiday import next_business_day
 
 
 start_krx = pd.Timestamp("1956-03-03", tz=UTC)
-start_default = pd.Timestamp("1986-01-04", tz=UTC)
+start_default = pd.Timestamp("1986-01-01", tz=UTC)
 
 
 class XKRXExchangeCalendar(ExchangeCalendar):
@@ -152,7 +153,7 @@ class XKRXExchangeCalendar(ExchangeCalendar):
     @property
     def special_weekmasks(self):
         return [
-            (None, pd.Timestamp("1998-12-07") - pd.Timedelta(1, unit="D"), "1111110"),
+            (None, pd.Timestamp("1998-12-06"), "1111110"),
         ]
 
     # KRX regular and adhoc holidays
@@ -181,11 +182,11 @@ class XKRXExchangeCalendar(ExchangeCalendar):
                         Holiday(
                             "First Business Day of Year",
                             month=1,
-                            day=2,
-                            observance=next_monday,
+                            day=1,
+                            observance=next_business_day,
                         )
                     ]
-                ),  # avoiding 01/01 since it's New Year's Day
+                ),
             ),
         ]
 
