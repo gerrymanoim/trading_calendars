@@ -360,6 +360,7 @@ malaysia_eid_al_adha = pd.to_datetime(
 )
 
 # Malaysia's observances of Deepavali (Hindu Lunar Calendar)
+# source: https://publicholidays.com.my/deepavali/
 deepavali = pd.to_datetime(
     [
         "2002-11-04",
@@ -377,10 +378,17 @@ deepavali = pd.to_datetime(
         "2017-10-18",
         "2018-11-06",
         "2019-10-28",
+        "2020-11-14", 
+        "2021-11-04",
+        "2022-10-24",
+        "2023-11-12",
+        "2024-10-31",
+        
     ]
 )
 
 # Malaysia's observances of Thaipusam (Tamil Calendar)
+# source: https://publicholidays.com.my/thaipusam/
 thaipusam = pd.to_datetime(
     [
         "2008-01-23",
@@ -395,6 +403,11 @@ thaipusam = pd.to_datetime(
         "2017-02-09",
         "2018-01-31",
         "2019-01-21",
+        "2020-02-08",
+        "2021-01-28",
+        "2022-01-18",
+        "2023-02-04",
+        "2024-01-25"
     ]
 )
 
@@ -426,6 +439,11 @@ wesak_day = pd.to_datetime(
 
 misc_adhoc = pd.to_datetime(
     [
+        "2024-06-03",  # Yang di-Pertuan Agong's Birthday
+        "2023-06-05",  # Yang di-Pertuan Agong's Birthday
+        "2022-06-06",  # Yang di-Pertuan Agong's Birthday
+        "2021-06-07",  # Yang di-Pertuan Agong's Birthday
+        "2020-06-08",  # Yang di-Pertuan Agong's Birthday
         "2019-09-09",  # Yang di-Pertuan Agong's Birthday
         "2019-07-30",  # Installation of Yang di-Pertuan Agong
         "2018-09-10",  # Yang di-Pertuan Agong's Birthday
