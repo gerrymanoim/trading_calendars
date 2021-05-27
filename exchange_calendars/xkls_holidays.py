@@ -96,7 +96,7 @@ muharram = pd.to_datetime(
         "2018-09-11",
         "2019-09-01",
         "2020-08-20",
-        "2021-08-10", # source: https://www.bursamalaysia.com/about_bursa/about_us/calendar
+        "2021-08-10",  # source: https://www.bursamalaysia.com/about_bursa/about_us/calendar
         "2022-07-30",
         "2023-07-19",
         "2024-07-07",
@@ -433,7 +433,6 @@ wesak_day = pd.to_datetime(
         "2022-05-15",
         "2023-05-04",
         "2024-05-22"
-        
     ]
 )
 
