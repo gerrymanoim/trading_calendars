@@ -173,7 +173,7 @@ muhammad_birthday = pd.to_datetime(
         "2018-11-20",
         "2019-11-09",
         "2020-10-29",
-        "2021-10-18",
+        "2021-10-19",  # corrected. source: https://www.bursamalaysia.com/about_bursa/about_us/calendar
         "2022-10-08",
         "2023-09-27",
         "2024-09-15",
@@ -439,6 +439,7 @@ wesak_day = pd.to_datetime(
 misc_adhoc = pd.to_datetime(
     [
         "2021-06-07",  # Yang di-Pertuan Agong's Birthday source https://www.bursamalaysia.com/about_bursa/about_us/calendar
+        "2020-06-08",  # Yang di-Pertuan Agong's Birthday source https://www.bursamalaysia.com/about_bursa/about_us/calendar
         "2019-09-09",  # Yang di-Pertuan Agong's Birthday
         "2019-07-30",  # Installation of Yang di-Pertuan Agong
         "2018-09-10",  # Yang di-Pertuan Agong's Birthday
