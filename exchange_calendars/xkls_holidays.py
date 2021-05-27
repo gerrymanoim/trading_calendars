@@ -410,8 +410,8 @@ thaipusam = pd.to_datetime(
     ]
 )
 
-# Malaysia's observances of Wesak Day
-# update with source: https://publicholidays.com.my/wesak-day/
+# Malaysia's observances of Wesak Day (Chinese Lunar Calendar)
+# source: https://publicholidays.com.my/wesak-day/
 wesak_day = pd.to_datetime(
     [
         "2003-05-15",
