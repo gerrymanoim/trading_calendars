@@ -64,7 +64,7 @@ class XTSECalendarTestCase(ExchangeCalendarTestBase, TestCase):
         self.assertNotIn(
             day_after_new_years_sunday,
             sessions,
-            "If NYE falls on a weekend, {0} the Monday after is a holiday.".format(
+            "If NYE falls on a weekend, {} the Monday after is a holiday.".format(
                 day_after_new_years_sunday
             ),
         )
@@ -73,7 +73,7 @@ class XTSECalendarTestCase(ExchangeCalendarTestBase, TestCase):
         self.assertIn(
             first_trading_day_after_new_years_sunday,
             sessions,
-            "If NYE falls on a weekend, {0} the Tuesday after is the "
+            "If NYE falls on a weekend, {} the Tuesday after is the "
             "first trading day.".format(first_trading_day_after_new_years_sunday),
         )
 
@@ -89,7 +89,7 @@ class XTSECalendarTestCase(ExchangeCalendarTestBase, TestCase):
         self.assertNotIn(
             new_years_day,
             sessions,
-            "If NYE falls during the week, e.g. {0}, it is a holiday.".format(
+            "If NYE falls during the week, e.g. {}, it is a holiday.".format(
                 new_years_day
             ),
         )
@@ -98,7 +98,7 @@ class XTSECalendarTestCase(ExchangeCalendarTestBase, TestCase):
         self.assertIn(
             first_trading_day_after_new_years,
             sessions,
-            "If the day after NYE falls during the week, {0} is the first "
+            "If the day after NYE falls during the week, {} is the first "
             "trading day.".format(first_trading_day_after_new_years),
         )
 

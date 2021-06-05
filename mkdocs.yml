@@ -1,0 +1,8 @@
+site_name: Exchange Calendars
+theme:
+  name: material
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - def_list

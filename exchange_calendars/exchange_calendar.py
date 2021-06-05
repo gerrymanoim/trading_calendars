@@ -152,21 +152,15 @@ class ExchangeCalendar(ABC):
         # with the same inputs.
         self._minute_to_session_label_cache = (None, None)
 
-        self.market_opens_nanos = self.schedule.market_open.values.astype(
+        self.market_opens_nanos = self.schedule.market_open.values.astype(np.int64)
+
+        self.market_break_starts_nanos = self.schedule.break_start.values.astype(
             np.int64
         )
 
-        self.market_break_starts_nanos = (
-            self.schedule.break_start.values.astype(np.int64)
-        )
+        self.market_break_ends_nanos = self.schedule.break_end.values.astype(np.int64)
 
-        self.market_break_ends_nanos = self.schedule.break_end.values.astype(
-            np.int64
-        )
-
-        self.market_closes_nanos = self.schedule.market_close.values.astype(
-            np.int64
-        )
+        self.market_closes_nanos = self.schedule.market_close.values.astype(np.int64)
 
         _check_breaks_match(
             self.market_break_starts_nanos, self.market_break_ends_nanos
@@ -258,12 +252,10 @@ class ExchangeCalendar(ABC):
 
     @lazyval
     def _minutes_per_session(self):
-        close_to_open_diff = (
-            self.schedule.market_close - self.schedule.market_open
+        close_to_open_diff = self.schedule.market_close - self.schedule.market_open
+        break_diff = (self.schedule.break_end - self.schedule.break_start).fillna(
+            pd.Timedelta(seconds=0)
         )
-        break_diff = (
-            self.schedule.break_end - self.schedule.break_start
-        ).fillna(pd.Timedelta(seconds=0))
         diff = (close_to_open_diff - break_diff).astype("timedelta64[m]")
         return diff + 1
 
@@ -415,9 +407,7 @@ class ExchangeCalendar(ABC):
             if ignore_breaks:
                 return True
 
-            break_start_on_open_dt = self.market_break_starts_nanos[
-                open_idx - 1
-            ]
+            break_start_on_open_dt = self.market_break_starts_nanos[open_idx - 1]
             break_end_on_open_dt = self.market_break_ends_nanos[open_idx - 1]
             # NaT comparisions will result in False
             if break_start_on_open_dt < dt < break_end_on_open_dt:
@@ -650,10 +640,7 @@ class ExchangeCalendar(ABC):
         minutes = self.execution_minutes_for_session
         return pd.DatetimeIndex(
             np.concatenate(
-                [
-                    minutes(session)
-                    for session in self.sessions_in_range(start, stop)
-                ]
+                [minutes(session) for session in self.sessions_in_range(start, stop)]
             ),
             tz=UTC,
         )
@@ -697,9 +684,7 @@ class ExchangeCalendar(ABC):
             The desired sessions.
         """
         return self.all_sessions[
-            self.all_sessions.slice_indexer(
-                start_session_label, end_session_label
-            )
+            self.all_sessions.slice_indexer(start_session_label, end_session_label)
         ]
 
     def sessions_window(self, session_label, count):
@@ -725,9 +710,7 @@ class ExchangeCalendar(ABC):
         start_idx = self.schedule.index.get_loc(session_label)
         end_idx = start_idx + count
         end_idx = max(0, end_idx)
-        return self.all_sessions[
-            min(start_idx, end_idx) : max(start_idx, end_idx) + 1
-        ]
+        return self.all_sessions[min(start_idx, end_idx) : max(start_idx, end_idx) + 1]
 
     def session_distance(self, start_session_label, end_session_label):
         """
@@ -786,9 +769,7 @@ class ExchangeCalendar(ABC):
         pd.DatetimeIndex
             The minutes in the desired range.
         """
-        start_idx = searchsorted(
-            self._trading_minutes_nanos, start_minute.value
-        )
+        start_idx = searchsorted(self._trading_minutes_nanos, start_minute.value)
 
         end_idx = searchsorted(self._trading_minutes_nanos, end_minute.value)
 
@@ -798,9 +779,7 @@ class ExchangeCalendar(ABC):
 
         return self.all_minutes[start_idx:end_idx]
 
-    def minutes_for_sessions_in_range(
-        self, start_session_label, end_session_label
-    ):
+    def minutes_for_sessions_in_range(self, start_session_label, end_session_label):
         """
         Returns all the minutes for all the sessions from the given start
         session label to the given end session label, inclusive.
@@ -1017,9 +996,7 @@ class ExchangeCalendar(ABC):
                 )
         else:
             # invalid direction
-            raise ValueError(
-                "Invalid direction parameter: " "{0}".format(direction)
-            )
+            raise ValueError("Invalid direction parameter: " "{}".format(direction))
 
         return current_or_next_session
 
@@ -1044,12 +1021,8 @@ class ExchangeCalendar(ABC):
             )
         # Find the indices of the previous open and the next close for each
         # minute.
-        prev_opens = (
-            self._opens.values.searchsorted(index.values, side="right") - 1
-        )
-        next_closes = self._closes.values.searchsorted(
-            index.values, side="left"
-        )
+        prev_opens = self._opens.values.searchsorted(index.values, side="right") - 1
+        next_closes = self._closes.values.searchsorted(index.values, side="left")
 
         # If they don't match, the minute is outside the trading day. Barf.
         mismatches = prev_opens != next_closes
@@ -1191,9 +1164,7 @@ def scheduled_special_times(calendar, start, end, time, tz):
     )
 
 
-def _overwrite_special_dates(
-    session_labels, opens_or_closes, special_opens_or_closes
-):
+def _overwrite_special_dates(session_labels, opens_or_closes, special_opens_or_closes):
     """
     Overwrite dates in open_or_closes with corresponding dates in
     special_opens_or_closes, using session_labels for alignment.
@@ -1248,8 +1219,7 @@ def _remove_breaks_for_special_dates(
         raise ValueError(
             "Found misaligned dates while building calendar.\n"
             "Expected session_labels to be the same length as break_starts,\n"
-            "but len(session_labels)=%d, len(break_start_or_end)=%d"
-            % (len_m, len_oc)
+            "but len(session_labels)=%d, len(break_start_or_end)=%d" % (len_m, len_oc)
         )
 
     # Find the array indices corresponding to each special date.

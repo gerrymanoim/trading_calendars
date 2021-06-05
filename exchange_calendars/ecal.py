@@ -100,7 +100,7 @@ def _int_arg(v, name):
     try:
         return int(v)
     except ValueError:
-        error("%s must be an integer, got: %r" % (name, v))
+        error("{} must be an integer, got: {!r}".format(name, v))
 
 
 def parse_args(argv):

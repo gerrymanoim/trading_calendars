@@ -45,13 +45,9 @@ CarnavalSegunda = Holiday(
     "Carnaval Segunda", month=1, day=1, offset=[Easter(), Day(-48)]
 )
 # Carnival Tuesday
-CarnavalTerca = Holiday(
-    "Carnaval Terca", month=1, day=1, offset=[Easter(), Day(-47)]
-)
+CarnavalTerca = Holiday("Carnaval Terca", month=1, day=1, offset=[Easter(), Day(-47)])
 # Ash Wednesday (short day)
-QuartaCinzas = Holiday(
-    "Quarta Cinzas", month=1, day=1, offset=[Easter(), Day(-46)]
-)
+QuartaCinzas = Holiday("Quarta Cinzas", month=1, day=1, offset=[Easter(), Day(-46)])
 # Good Friday
 SextaPaixao = GoodFriday
 # Feast of the Most Holy Body of Christ
