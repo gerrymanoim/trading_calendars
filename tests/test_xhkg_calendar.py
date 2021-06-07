@@ -15,6 +15,8 @@ class XHKGCalendarTestCase(ExchangeCalendarTestBase, TestCase):
     answer_key_filename = "xhkg"
     calendar_class = XHKGExchangeCalendar
 
+    HAVE_BREAKS = True
+
     MAX_SESSION_HOURS = 6.5
 
     # Asia/Hong_Kong does not have daylight savings

@@ -12,7 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
+import typing
+import pandas as pd
+
 from exchange_calendars.utils.memoize import lazyval
+
+if typing.TYPE_CHECKING:
+    from exchange_calendars import ExchangeCalendar
 
 
 class CalendarError(Exception):
@@ -80,3 +87,55 @@ class ScheduleFunctionInvalidCalendar(CalendarError):
         "Invalid calendar '{given_calendar}' passed to schedule_function. "
         "Allowed options are {allowed_calendars}."
     )
+
+
+class NotSessionError(ValueError):
+    """
+    Raised if parameter expecting a session label receives input that
+    parses correctly (UTC midnight) although is not a session.
+
+    Parameters
+    ----------
+    calendar :
+        Calendar for which `ts` assumed as a session.
+
+    ts :
+        Timestamp assumed as a session.
+
+    param_name : optional
+        Name of a parameter that was to receive a session label. If passed
+        then error message will make reference to the parameter by name.
+    """
+
+    def __init__(
+        self,
+        calendar: ExchangeCalendar,
+        ts: pd.Timestamp,
+        param_name: str | None = None,
+    ):
+        self.calendar = calendar
+        self.ts = ts
+        self.param_name = param_name
+
+    def __str__(self) -> str:
+        if self.param_name is not None:
+            msg = (
+                f"Parameter `{self.param_name}` takes a session label"
+                f" although received input that parsed to '{self.ts}' which"
+            )
+        else:
+            msg = f"'{self.ts}'"
+
+        if self.ts < self.calendar.first_session:
+            msg += (
+                " is earlier than the first session of calendar"
+                f" '{self.calendar.name}' ('{self.calendar.first_session}')."
+            )
+        elif self.ts > self.calendar.last_session:
+            msg += (
+                " is later than the last session of calendar"
+                f" '{self.calendar.name}' ('{self.calendar.last_session}')."
+            )
+        else:
+            msg += f" is not a session of calendar '{self.calendar.name}'."
+        return msg

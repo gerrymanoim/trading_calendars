@@ -1,12 +1,23 @@
+from __future__ import annotations
+import typing
+import datetime
+
 import numpy as np
 import pandas as pd
+
+from exchange_calendars import errors
+
+if typing.TYPE_CHECKING:
+    from exchange_calendars import ExchangeCalendar
 
 NANOSECONDS_PER_MINUTE = int(6e10)
 
 NP_NAT = np.array([pd.NaT], dtype=np.int64)[0]
 
+Session = typing.Union[pd.Timestamp, str, int, float, datetime.datetime]
 
-def next_divider_idx(dividers, minute_val):
+
+def next_divider_idx(dividers: np.ndarray, minute_val: int) -> int:
 
     divider_idx = np.searchsorted(dividers, minute_val, side="right")
     target = dividers[divider_idx]
@@ -18,7 +29,7 @@ def next_divider_idx(dividers, minute_val):
         return divider_idx
 
 
-def previous_divider_idx(dividers, minute_val):
+def previous_divider_idx(dividers: np.ndarray, minute_val: int) -> int:
 
     divider_idx = np.searchsorted(dividers, minute_val)
 
@@ -29,11 +40,11 @@ def previous_divider_idx(dividers, minute_val):
 
 
 def compute_all_minutes(
-    opens_in_ns,
-    break_starts_in_ns,
-    break_ends_in_ns,
-    closes_in_ns,
-):
+    opens_in_ns: np.ndarray,
+    break_starts_in_ns: np.ndarray,
+    break_ends_in_ns: np.ndarray,
+    closes_in_ns: np.ndarray,
+) -> np.ndarray:
     """
     Given arrays of opens and closes (in nanoseconds) and optionally
     break_starts and break ends, return an array of each minute between the
@@ -71,3 +82,96 @@ def compute_all_minutes(
             )
     out = np.concatenate(pieces).view("datetime64[ns]")
     return out
+
+
+def parse_session(
+    calendar: ExchangeCalendar,
+    session: Session,
+    param_name: str | None = None,
+    strict: bool = True,
+) -> pd.Timestamp:
+    """Parse input intended to represent a session label.
+
+    Parameters
+    ----------
+    calendar :
+        Calendar against which to evaluate `session`.
+
+    session :
+        Input to be parsed to session label. Must be valid input to
+        pd.Timestamp and have a time component of 00:00.
+
+    param_name : optional
+        Name of a parameter receiving a session label. If passed
+        then error message will make reference to the parameter by name.
+
+    strict : default: True
+        Determines behaviour if `session` parses as UTC midnight although
+        is not a session of `calendar`.
+            True - raise NotSessionError.
+            False - return UTC midnight pd.Timestamp that does not
+            represent a session.
+
+    Returns
+    -------
+    pd.Timestamp
+        pd.Timestamp (UTC with time component of 00:00). If `strict` True
+        then return will represent a session of `calendar`.
+
+    Raises
+    ------
+    TypeError
+        If `session` is not of type pd.Timestamp | str | int | float |
+            datetime.datetime.
+
+    ValueError
+        If `session` is not an acceptable single-argument input to
+        pd.Timestamp.
+
+        If `session` time component is not 00:00.
+
+        If `session` is timezone aware and timezone is not UTC.
+
+    exchange_calendars.errors.NotSessionError
+        If `strict` True and `session` parses to a valid representation of
+        a session label although it is not a session of `calendar`.
+    """
+    try:
+        ts = pd.Timestamp(session)
+    except Exception:
+        insert = (
+            "received" if param_name is None else f"'{param_name}' received as"
+        )
+        msg = (
+            "A session label must be passed as a pd.Timestamp or a valid"
+            " single-argument input to pd.Timestamp although"
+            f" {insert} '{session}'."
+        )
+        if isinstance(
+            session, (pd.Timestamp, str, int, float, datetime.datetime)
+        ):
+            raise ValueError(msg) from None
+        else:
+            raise TypeError(msg) from None
+
+    if not (ts.tz is None or ts.tz.zone == "UTC"):
+        insert = " " if param_name is None else f" '{param_name}' "
+        raise ValueError(
+            "A session label must be timezone naive or have timezone"
+            f" as 'UTC', although{insert}parsed as '{ts}'."
+        )
+
+    if not ts == ts.normalize():
+        insert = " " if param_name is None else f" '{param_name}' "
+        raise ValueError(
+            "A session label must have a time component of 00:00"
+            f" although{insert}parsed as '{ts}'."
+        )
+
+    if ts.tz is None:
+        ts = ts.tz_localize("UTC")
+
+    if strict and not calendar.is_session(ts):
+        raise errors.NotSessionError(calendar, ts, param_name)
+    else:
+        return ts

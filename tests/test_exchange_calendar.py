@@ -16,6 +16,7 @@ from datetime import time
 from os.path import abspath, dirname, join
 from unittest import TestCase
 
+import pytest
 import numpy as np
 import pandas as pd
 import pandas.testing as tm
@@ -179,6 +180,10 @@ class ExchangeCalendarTestBase(object):
     # Affects tests that care about late opens. Since most do not, defaulting
     # to False.
     HAVE_LATE_OPENS = False
+
+    # Affects test_for_breaks. True if one or more calendar sessions has a
+    # break.
+    HAVE_BREAKS = False
 
     # Affects test_sanity_check_session_lengths. Should be set to the largest
     # number of hours that ever appear in a single session.
@@ -883,7 +888,9 @@ class ExchangeCalendarTestBase(object):
                 (localized_open.year, localized_open.month, localized_open.day),
             )
 
-            open_ix = open_times.index.searchsorted(pd.Timestamp(date), side="r")
+            open_ix = open_times.index.searchsorted(
+                pd.Timestamp(date), side="right"
+            )
             if open_ix == len(open_times):
                 open_ix -= 1
 
@@ -908,6 +915,52 @@ class ExchangeCalendarTestBase(object):
             calendar.last_trading_session,
             self.TEST_START_END_EXPECTED_LAST,
         )
+
+    def test_has_breaks(self):
+        has_breaks = self.calendar.has_breaks()
+        self.assertEqual(has_breaks, self.HAVE_BREAKS)
+
+
+class TestSessionHasBreak:
+    """Test for ExchangeCalendar.session_has_break."""
+
+    @pytest.fixture
+    def cal_xhkg(self) -> ExchangeCalendar:
+        yield get_calendar("XHKG")
+
+    @pytest.fixture
+    def xhkg_session_no_break(self, cal_xhkg) -> pd.Timestamp:
+        session = pd.Timestamp("2020-12-31", tz="UTC")
+        assert session in cal_xhkg.schedule.index
+        yield session
+
+    @pytest.fixture
+    def xhkg_session_with_break(self, cal_xhkg) -> pd.Timestamp:
+        session = pd.Timestamp("2021-01-04", tz="UTC")
+        assert session in cal_xhkg.schedule.index
+        yield session
+
+    @pytest.fixture
+    def cal_xlon(self) -> ExchangeCalendar:
+        yield get_calendar("XLON")
+
+    @pytest.fixture
+    def xlon_session(self, cal_xlon) -> pd.Timestamp:
+        session = pd.Timestamp("2021-06-07", tz="UTC")
+        assert session in cal_xlon.schedule.index
+        yield session
+
+    def test_session_has_break(
+        self,
+        cal_xhkg,
+        xhkg_session_no_break,
+        xhkg_session_with_break,
+        cal_xlon,
+        xlon_session,
+    ):
+        assert not cal_xhkg.session_has_break(xhkg_session_no_break)
+        assert cal_xhkg.session_has_break(xhkg_session_with_break)
+        assert not cal_xlon.session_has_break(xlon_session)
 
 
 class EuronextCalendarTestBase(ExchangeCalendarTestBase):
