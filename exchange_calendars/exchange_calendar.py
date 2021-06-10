@@ -429,8 +429,12 @@ class ExchangeCalendar(ABC):
         bool
             True if any calendar session has a break, false otherwise.
         """
-        start = start if start is None else parse_session(self, start, "start")
-        end = end if end is None else parse_session(self, end, "end")
+        start = start if start is None else parse_session(
+            self, start, "start", strict=False
+        )
+        end = end if end is None else parse_session(
+            self, end, "end", strict=False
+        )
         return self.break_starts[start:end].notna().any()
 
     def is_open_on_minute(self, dt, ignore_breaks=False):
