@@ -351,6 +351,17 @@ precomputed_ses_holidays = pd.to_datetime(
         "2020-07-31",
         "2020-08-10",
         "2020-12-25",
+        "2021-01-01",  # New Year's Day
+        "2021-02-12",  # Chinese New Year  TODO: 2021-02-11 is half day
+        "2021-02-13",  # Chinese New Year
+        "2021-04-02",  # Good Friday
+        "2021-05-01",  # Labour Day
+        "2021-05-13",  # Hari Raya Puasa
+        "2021-05-26",  # Vesak Day
+        "2021-07-20",  # Hari Raya Haji
+        "2021-08-09",  # National Day
+        "2021-11-04",  # Deepavali
+        "2021-12-25",  # Christmas Day. TODO: 2021-12-24 and 2021-12-31 are half days
     ]
 )
 
@@ -369,6 +380,12 @@ class XSESExchangeCalendar(PrecomputedExchangeCalendar):
 
     TODO: There are a handful of half-days (day before Chinese New Year,
     Christmas Eve, etc.). We will add those later.
+
+    References
+    ----------
+    Accessed 2021-06-11 for 2021 holidays:
+        https://www.sgx.com/securities/trading#Trading%20Hours%20&%20Opening/Closing%20Routine
+        https://www.mom.gov.sg/employment-practices/public-holidays
     """
 
     name = "XSES"
