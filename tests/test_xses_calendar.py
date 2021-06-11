@@ -35,7 +35,7 @@ class XSESCalendarTestCase(ExchangeCalendarTestBase, TestCase):
             self.assertNotIn(session_label, self.calendar.all_sessions)
 
     def test_constrain_construction_dates(self):
-        # the XSES calendar currently goes from 1999 to 2025, inclusive.
+        # the XSES calendar currently goes from 1999 to 2021, inclusive.
         with self.assertRaises(ValueError) as e:
             self.calendar_class(T("1985-12-31"), T("2005-01-01"))
 
@@ -48,12 +48,12 @@ class XSESCalendarTestCase(ExchangeCalendarTestBase, TestCase):
         )
 
         with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("2005-01-01"), T("2021-01-01"))
+            self.calendar_class(T("2005-01-01"), T("2022-01-03"))
 
         self.assertEqual(
             str(e.exception),
             (
-                "The XSES holidays are only recorded to 2020,"
-                " cannot instantiate the XSES calendar for 2021."
+                "The XSES holidays are only recorded to 2021,"
+                " cannot instantiate the XSES calendar for 2022."
             ),
         )
