@@ -429,12 +429,10 @@ class ExchangeCalendar(ABC):
         bool
             True if any calendar session has a break, false otherwise.
         """
-        start = start if start is None else parse_session(
-            self, start, "start", strict=False
-        )
-        end = end if end is None else parse_session(
-            self, end, "end", strict=False
-        )
+        if start is not None:
+            start = parse_session(start, "start", self, strict=False)
+        if end is not None:
+            end = parse_session(end, "end", self, strict=False)
         return self.break_starts[start:end].notna().any()
 
     def is_open_on_minute(self, dt, ignore_breaks=False):
@@ -614,7 +612,7 @@ class ExchangeCalendar(ABC):
         Raises ValueError if the given session is the last session in this
         calendar.
         """
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         idx = self.schedule.index.get_loc(session_label)
         try:
             return self.schedule.index[idx + 1]
@@ -646,7 +644,7 @@ class ExchangeCalendar(ABC):
         Raises ValueError if the given session is the first session in this
         calendar.
         """
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         idx = self.schedule.index.get_loc(session_label)
         if idx == 0:
             raise ValueError(
@@ -669,7 +667,7 @@ class ExchangeCalendar(ABC):
         pd.DateTimeIndex
             All the minutes for the given session.
         """
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         return self.minutes_in_range(
             start_minute=self.schedule.at[session_label, "market_open"],
             end_minute=self.schedule.at[session_label, "market_close"],
@@ -691,7 +689,7 @@ class ExchangeCalendar(ABC):
         pd.DateTimeIndex
             All the execution minutes for the given session.
         """
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         return self.minutes_in_range(
             start_minute=self.execution_time_from_open(
                 self.schedule.at[session_label, "market_open"],
@@ -778,7 +776,7 @@ class ExchangeCalendar(ABC):
         pd.DatetimeIndex
             The desired sessions.
         """
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         start_idx = self.schedule.index.get_loc(session_label)
         end_idx = start_idx + count
         end_idx = max(0, end_idx)
@@ -881,10 +879,10 @@ class ExchangeCalendar(ABC):
 
         """
         start_session_label = parse_session(
-            self, start_session_label, "start_session_label"
+            start_session_label, "start_session_label", self
         )
         end_session_label = parse_session(
-            self, end_session_label, "end_session_label"
+            end_session_label, "end_session_label", self
         )
         first_minute, _ = self.open_and_close_for_session(start_session_label)
         _, last_minute = self.open_and_close_for_session(end_session_label)
@@ -908,7 +906,7 @@ class ExchangeCalendar(ABC):
         (Timestamp, Timestamp)
             The open and close for the given session.
         """
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         return (
             self.session_open(session_label),
             self.session_close(session_label),
@@ -931,18 +929,18 @@ class ExchangeCalendar(ABC):
         (Timestamp, Timestamp)
             The break start and end for the given session.
         """
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         return (
             self.session_break_start(session_label),
             self.session_break_end(session_label),
         )
 
     def session_open(self, session_label: Session) -> pd.Timestamp:
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         return self.schedule.at[session_label, "market_open"].tz_localize(UTC)
 
     def session_break_start(self, session_label: Session) -> pd.Timestamp:
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         break_start = self.schedule.at[session_label, "break_start"]
         if not pd.isnull(break_start):
             # older versions of pandas need this guard
@@ -951,7 +949,7 @@ class ExchangeCalendar(ABC):
         return break_start
 
     def session_break_end(self, session_label: Session) -> pd.Timestamp:
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         break_end = self.schedule.at[session_label, "break_end"]
         if not pd.isnull(break_end):
             # older versions of pandas need this guard
@@ -960,7 +958,7 @@ class ExchangeCalendar(ABC):
         return break_end
 
     def session_close(self, session_label: Session) -> pd.Timestamp:
-        session_label = parse_session(self, session_label, "session_label")
+        session_label = parse_session(session_label, "session_label", self)
         return self.schedule.at[session_label, "market_close"].tz_localize(UTC)
 
     def session_opens_in_range(self, start_session_label, end_session_label):
@@ -1010,7 +1008,7 @@ class ExchangeCalendar(ABC):
         bool
             True if `session` has a break, false otherwise.
         """
-        session = parse_session(self, session, "session")
+        session = parse_session(session, "session", self)
         return pd.notna(self.session_break_start(session))
 
     def execution_time_from_open(self, open_dates):

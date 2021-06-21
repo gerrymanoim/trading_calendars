@@ -85,25 +85,26 @@ def compute_all_minutes(
 
 
 def parse_session(
-    calendar: ExchangeCalendar,
     session: Session,
     param_name: str | None = None,
+    calendar: ExchangeCalendar | None = None,
     strict: bool = True,
 ) -> pd.Timestamp:
     """Parse input intended to represent a session label.
 
     Parameters
     ----------
-    calendar :
-        Calendar against which to evaluate `session`.
-
     session :
         Input to be parsed to session label. Must be valid input to
         pd.Timestamp and have a time component of 00:00.
 
     param_name : optional
-        Name of a parameter receiving a session label. If passed
+        Name of a parameter that was to receive a session label. If passed
         then error message will make reference to the parameter by name.
+
+    calendar : optional
+        Calendar against which to evaluate `session`. Not required
+        if `strict` is False.
 
     strict : default: True
         Determines behaviour if `session` parses as UTC midnight although
@@ -136,9 +137,12 @@ def parse_session(
         If `strict` True and `session` parses to a valid representation of
         a session label although it is not a session of `calendar`.
     """
+    if calendar is None and strict is True:
+        raise ValueError("`calendar` must be passed if `strict` True.")
+
     try:
         ts = pd.Timestamp(session)
-    except Exception:
+    except Exception as e:
         insert = (
             "received" if param_name is None else f"'{param_name}' received as"
         )
@@ -147,12 +151,10 @@ def parse_session(
             " single-argument input to pd.Timestamp although"
             f" {insert} '{session}'."
         )
-        if isinstance(
-            session, (pd.Timestamp, str, int, float, datetime.datetime)
-        ):
-            raise ValueError(msg) from None
+        if isinstance(e, TypeError):
+            raise TypeError(msg) from e
         else:
-            raise TypeError(msg) from None
+            raise ValueError(msg) from e
 
     if not (ts.tz is None or ts.tz.zone == "UTC"):
         insert = " " if param_name is None else f" '{param_name}' "
@@ -171,7 +173,7 @@ def parse_session(
     if ts.tz is None:
         ts = ts.tz_localize("UTC")
 
-    if strict and not calendar.is_session(ts):
-        raise errors.NotSessionError(calendar, ts, param_name)
-    else:
+    if not strict or calendar.is_session(ts):
         return ts
+    else:
+        raise errors.NotSessionError(calendar, ts, param_name)

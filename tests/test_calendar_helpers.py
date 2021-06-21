@@ -10,7 +10,7 @@ from exchange_calendars import errors
 
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
-# TODO tests for next_divider_idx, previous_divider_idx, compute_all_minutes
+# TODO tests for next_divider_idx, previous_divider_idx, compute_all_minutes (#15)
 
 
 @pytest.fixture
@@ -49,41 +49,41 @@ def test_parse_session_invalid_session_input(
 
     session = "not valid input"
     with pytest.raises(ValueError):
-        m.parse_session(xnys_cal, session, name)
+        m.parse_session(session, name, xnys_cal)
 
     session = ["not", "valid", "input"]
     with pytest.raises(TypeError):
-        m.parse_session(xnys_cal, session, name)
+        m.parse_session(session, name, xnys_cal)
 
     session = pd.Timestamp("2021-06-07", tz="US/Central")
     with pytest.raises(
         ValueError, match="A session label must be timezone naive or"
     ):
-        m.parse_session(xnys_cal, session, name)
+        m.parse_session(session, name, xnys_cal)
 
     session = pd.Timestamp("2021-06-07 13:33")
     with pytest.raises(
         ValueError, match="A session label must have a time component of 00:00"
     ):
-        m.parse_session(xnys_cal, session, name)
+        m.parse_session(session, name, xnys_cal)
 
     with pytest.raises(
         errors.NotSessionError,
         match="is not a session of calendar",
     ):
-        m.parse_session(xnys_cal, xnys_nonsession, name, strict=True)
+        m.parse_session(xnys_nonsession, name, xnys_cal, strict=True)
 
     with pytest.raises(
         errors.NotSessionError,
         match="is earlier than the first session of calendar",
     ):
-        m.parse_session(xnys_cal, xnys_session_too_early, name, strict=True)
+        m.parse_session(xnys_session_too_early, name, xnys_cal, strict=True)
 
     with pytest.raises(
         errors.NotSessionError,
         match="is later than the last session of calendar",
     ):
-        m.parse_session(xnys_cal, xnys_session_too_late, name, strict=True)
+        m.parse_session(xnys_session_too_late, name, xnys_cal, strict=True)
 
 
 @pytest.mark.parametrize(
@@ -95,7 +95,7 @@ def test_parse_session_invalid_session_input(
     ],
 )
 def test_parse_session_valid_session_input(xnys_cal, session):
-    parsed_session = m.parse_session(xnys_cal, session)
+    parsed_session = m.parse_session(session, calendar=xnys_cal)
     assert isinstance(parsed_session, pd.Timestamp)
     assert parsed_session.tz.zone == "UTC"
     assert parsed_session == parsed_session.normalize()
@@ -103,7 +103,9 @@ def test_parse_session_valid_session_input(xnys_cal, session):
 
 
 def test_parse_session_valid_nonsession_input(xnys_cal, xnys_nonsession):
-    parsed_session = m.parse_session(xnys_cal, xnys_nonsession, strict=False)
+    parsed_session = m.parse_session(
+        xnys_nonsession, calendar=xnys_cal, strict=False
+    )
     assert isinstance(parsed_session, pd.Timestamp)
     assert parsed_session.tz.zone == "UTC"
     assert parsed_session == parsed_session.normalize()
