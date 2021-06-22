@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+import pandas.testing as tm
+
 from exchange_calendars.exchange_calendar_xkrx import XKRXExchangeCalendar
 
 from .test_exchange_calendar import NoDSTExchangeCalendarTestBase
@@ -9,11 +11,23 @@ from .test_utils import T
 class XKRXCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
 
     answer_key_filename = "xkrx"
+    answer_key_filename_old = "xkrx_old"
+
     calendar_class = XKRXExchangeCalendar
 
     # Korea exchange is open from 9am to 3:30pm
     MAX_SESSION_HOURS = 6.5
     HAVE_EARLY_CLOSES = False
+
+    @classmethod
+    def setup_class(cls):
+        super().setup_class()
+        cls.answers_old = cls.load_answer_key(cls.answer_key_filename_old)
+
+    @classmethod
+    def teardown_class(cls):
+        super().teardown_class()
+        cls.answers_old = None
 
     def test_normal_year(self):
         expected_holidays_2017 = [
@@ -39,27 +53,38 @@ class XKRXCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
         for session_label in expected_holidays_2017:
             self.assertNotIn(session_label, self.calendar.all_sessions)
 
+    def test_calculated_against_old_csv(self):
+        start_date = T(
+            "1998-12-07"
+        )  # the current weekmask (1111100) applies since 1998-12-07
+        end_date = T("2021-12-31")  # old answer csv file has index until 2021
+        answers_old = self.answers_old.index
+        answers_old = answers_old[answers_old.slice_indexer(start_date, end_date)]
+        schedule = self.calendar.schedule.index
+        schedule = schedule[schedule.slice_indexer(start_date, end_date)]
+        tm.assert_index_equal(answers_old, schedule)
+
     def test_constrain_construction_dates(self):
-        # the XKRX calendar currently goes from 1986 to 2021, inclusive.
+        # the XKRX calendar currently goes from 1956-03-03 to 2050-12-31, inclusive.
         with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("1985-12-31"), T("2005-01-01"))
+            self.calendar_class(T("1955-01-01"), T("2005-01-01"))
 
         self.assertEqual(
             str(e.exception),
             (
-                "The XKRX holidays are only recorded back to 1986,"
-                " cannot instantiate the XKRX calendar back to 1985."
+                "The XKRX holidays are only recorded back to 1956,"
+                " cannot instantiate the XKRX calendar back to 1955."
             ),
         )
 
         with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("2005-01-01"), T("2022-01-03"))
+            self.calendar_class(T("2005-01-01"), T("2051-01-03"))
 
         self.assertEqual(
             str(e.exception),
             (
-                "The XKRX holidays are only recorded to 2021,"
-                " cannot instantiate the XKRX calendar for 2022."
+                "The XKRX holidays are only recorded to 2050,"
+                " cannot instantiate the XKRX calendar for 2051."
             ),
         )
 
@@ -111,5 +136,33 @@ class XKRXCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
         expected_hangeul_day = T("2013-10-09")
         unexpected_hangeul_day = T("2012-10-09")
 
-        self.assertTrue(expected_hangeul_day not in self.calendar.all_sessions)
-        self.assertTrue(unexpected_hangeul_day in self.calendar.all_sessions)
+        self.assertNotIn(expected_hangeul_day, self.calendar.all_sessions)
+        self.assertIn(unexpected_hangeul_day, self.calendar.all_sessions)
+
+    def test_historical_regular_holidays_fall_into_precomputed_holidays(self):
+        from pandas import DatetimeIndex
+
+        precomputed_holidays = DatetimeIndex(self.calendar.adhoc_holidays)
+
+        # precomputed holidays won't include weekends (saturday, sunday)
+        self.assertTrue(all(d.weekday() < 5 for d in precomputed_holidays))
+
+        generated_holidays = self.calendar.regular_holidays.holidays(
+            precomputed_holidays.min(), precomputed_holidays.max(), return_name=True
+        )
+
+        # generated holidays include weekends
+        self.assertFalse(all(d.weekday() < 5 for d in generated_holidays.index))
+
+        # filter non weekend generated holidays
+        non_weekend_mask = DatetimeIndex(
+            [d for d in generated_holidays.index if d.weekday() < 5]
+        )
+        non_weekend_generated_holidays = generated_holidays[non_weekend_mask]
+
+        # generated holidays should generally fall into one of the precomputed holidays
+        # except the future holidays that are not precomputed yet
+        isin = non_weekend_generated_holidays.index.isin(precomputed_holidays)
+        missing = non_weekend_generated_holidays[~isin]
+
+        self.assertTrue(all(isin), "missing holidays = \n%s" % missing)

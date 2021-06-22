@@ -35,6 +35,7 @@ from .calendar_helpers import (
 )
 from .utils.memoize import lazyval
 from .utils.pandas_utils import days_at_time
+from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 
 start_default = pd.Timestamp("1990-01-01", tz=UTC)
 end_base = pd.Timestamp("today", tz=UTC)
@@ -118,6 +119,9 @@ class ExchangeCalendar(ABC):
             self.close_offset,
         )
 
+        # Apply special offsets first
+        self._calculate_and_overwrite_special_offsets(_all_days, start, end)
+
         # `Series`s mapping sessions with nonstandard opens/closes to
         # the open/close time.
         _special_opens = self._calculate_special_opens(start, end)
@@ -155,21 +159,15 @@ class ExchangeCalendar(ABC):
         # with the same inputs.
         self._minute_to_session_label_cache = (None, None)
 
-        self.market_opens_nanos = self.schedule.market_open.values.astype(
+        self.market_opens_nanos = self.schedule.market_open.values.astype(np.int64)
+
+        self.market_break_starts_nanos = self.schedule.break_start.values.astype(
             np.int64
         )
 
-        self.market_break_starts_nanos = (
-            self.schedule.break_start.values.astype(np.int64)
-        )
+        self.market_break_ends_nanos = self.schedule.break_end.values.astype(np.int64)
 
-        self.market_break_ends_nanos = self.schedule.break_end.values.astype(
-            np.int64
-        )
-
-        self.market_closes_nanos = self.schedule.market_close.values.astype(
-            np.int64
-        )
+        self.market_closes_nanos = self.schedule.market_close.values.astype(np.int64)
 
         _check_breaks_match(
             self.market_break_starts_nanos, self.market_break_ends_nanos
@@ -188,11 +186,19 @@ class ExchangeCalendar(ABC):
 
     @lazyval
     def day(self):
-        return CustomBusinessDay(
-            holidays=self.adhoc_holidays,
-            calendar=self.regular_holidays,
-            weekmask=self.weekmask,
-        )
+        if self.special_weekmasks:
+            return MultipleWeekmaskCustomBusinessDay(
+                holidays=self.adhoc_holidays,
+                calendar=self.regular_holidays,
+                weekmask=self.weekmask,
+                weekmasks=self.special_weekmasks,
+            )
+        else:
+            return CustomBusinessDay(
+                holidays=self.adhoc_holidays,
+                calendar=self.regular_holidays,
+                weekmask=self.weekmask,
+            )
 
     @abstractproperty
     def name(self) -> str:
@@ -259,12 +265,10 @@ class ExchangeCalendar(ABC):
 
     @lazyval
     def _minutes_per_session(self):
-        close_to_open_diff = (
-            self.schedule.market_close - self.schedule.market_open
+        close_to_open_diff = self.schedule.market_close - self.schedule.market_open
+        break_diff = (self.schedule.break_end - self.schedule.break_start).fillna(
+            pd.Timedelta(seconds=0)
         )
-        break_diff = (
-            self.schedule.break_end - self.schedule.break_start
-        ).fillna(pd.Timedelta(seconds=0))
         diff = (close_to_open_diff - break_diff).astype("timedelta64[m]")
         return diff + 1
 
@@ -302,7 +306,7 @@ class ExchangeCalendar(ABC):
         """
         Returns
         -------
-        list : A list of timestamps representing unplanned closes.
+        list: A list of timestamps representing unplanned closes.
         """
         return []
 
@@ -345,6 +349,38 @@ class ExchangeCalendar(ABC):
         -------
         list: List of (time, DatetimeIndex) tuples that represent special
          closes that cannot be codified into rules.
+        """
+        return []
+
+    @property
+    def special_weekmasks(self):
+        """
+        Returns
+        -------
+        list: List of (date, date, str) tuples that represent special
+         weekmasks that applies between dates.
+        """
+        return []
+
+    @property
+    def special_offsets(self):
+        """
+        Returns
+        -------
+        list: List of (timedelta, timedelta, timedelta, timedelta, AbstractHolidayCalendar) tuples
+         that represent special open, break_start, break_end, close offsets
+         and corresponding HolidayCalendars.
+        """
+        return []
+
+    @property
+    def special_offsets_adhoc(self):
+        """
+        Returns
+        -------
+        list: List of (timedelta, timedelta, timedelta, timedelta, DatetimeIndex) tuples
+         that represent special open, break_start, break_end, close offsets
+         and corresponding DatetimeIndexes.
         """
         return []
 
@@ -463,9 +499,7 @@ class ExchangeCalendar(ABC):
             if ignore_breaks:
                 return True
 
-            break_start_on_open_dt = self.market_break_starts_nanos[
-                open_idx - 1
-            ]
+            break_start_on_open_dt = self.market_break_starts_nanos[open_idx - 1]
             break_end_on_open_dt = self.market_break_ends_nanos[open_idx - 1]
             # NaT comparisions will result in False
             if break_start_on_open_dt < dt < break_end_on_open_dt:
@@ -703,10 +737,7 @@ class ExchangeCalendar(ABC):
         minutes = self.execution_minutes_for_session
         return pd.DatetimeIndex(
             np.concatenate(
-                [
-                    minutes(session)
-                    for session in self.sessions_in_range(start, stop)
-                ]
+                [minutes(session) for session in self.sessions_in_range(start, stop)]
             ),
             tz=UTC,
         )
@@ -749,9 +780,7 @@ class ExchangeCalendar(ABC):
             The desired sessions.
         """
         return self.all_sessions[
-            self.all_sessions.slice_indexer(
-                start_session_label, end_session_label
-            )
+            self.all_sessions.slice_indexer(start_session_label, end_session_label)
         ]
 
     def sessions_window(
@@ -780,9 +809,7 @@ class ExchangeCalendar(ABC):
         start_idx = self.schedule.index.get_loc(session_label)
         end_idx = start_idx + count
         end_idx = max(0, end_idx)
-        return self.all_sessions[
-            min(start_idx, end_idx) : max(start_idx, end_idx) + 1
-        ]
+        return self.all_sessions[min(start_idx, end_idx) : max(start_idx, end_idx) + 1]
 
     def session_distance(
         self,
@@ -846,7 +873,6 @@ class ExchangeCalendar(ABC):
             The minutes in the desired range.
         """
         start_idx = searchsorted(self.all_minutes_nanos, start_minute.value)
-
         end_idx = searchsorted(self.all_minutes_nanos, end_minute.value)
 
         if end_minute.value == self.all_minutes_nanos[end_idx]:
@@ -1093,9 +1119,7 @@ class ExchangeCalendar(ABC):
                 )
         else:
             # invalid direction
-            raise ValueError(
-                "Invalid direction parameter: " "{0}".format(direction)
-            )
+            raise ValueError("Invalid direction parameter: " "{0}".format(direction))
 
         return current_or_next_session
 
@@ -1123,12 +1147,8 @@ class ExchangeCalendar(ABC):
             )
         # Find the indices of the previous open and the next close for each
         # minute.
-        prev_opens = (
-            self._opens.values.searchsorted(index.values, side="right") - 1
-        )
-        next_closes = self._closes.values.searchsorted(
-            index.values, side="left"
-        )
+        prev_opens = self._opens.values.searchsorted(index.values, side="right") - 1
+        next_closes = self._closes.values.searchsorted(index.values, side="left")
 
         # If they don't match, the minute is outside the trading day. Barf.
         mismatches = prev_opens != next_closes
@@ -1231,6 +1251,137 @@ class ExchangeCalendar(ABC):
             end,
         )
 
+    def _overwrite_special_offsets(
+        self,
+        session_labels,
+        opens_or_closes,
+        calendars,
+        ad_hoc_dates,
+        start_date,
+        end_date,
+        strict=False,
+    ):
+        # Short circuit when nothing to apply.
+        if opens_or_closes is None or not len(opens_or_closes):
+            return
+
+        len_m, len_oc = len(session_labels), len(opens_or_closes)
+        if len_m != len_oc:
+            raise ValueError(
+                "Found misaligned dates while building calendar.\n"
+                "Expected session_labels to be the same length as "
+                "open_or_closes but,\n"
+                "len(session_labels)=%d, len(open_or_closes)=%d" % (len_m, len_oc)
+            )
+
+        regular = []
+        for offset, calendar in calendars:
+            days = calendar.holidays(start_date, end_date)
+            series = pd.Series(
+                index=pd.DatetimeIndex(days, tz=UTC),
+                data=offset,
+            )
+            regular.append(series)
+
+        ad_hoc = []
+        for offset, datetimes in ad_hoc_dates:
+            series = pd.Series(
+                index=pd.to_datetime(datetimes, utc=True),
+                data=offset,
+            )
+            ad_hoc.append(series)
+
+        merged = regular + ad_hoc
+        if not merged:
+            return pd.Series([], dtype="timedelta64[ns]")
+
+        result = pd.concat(merged).sort_index()
+        offsets = result.loc[(result.index >= start_date) & (result.index <= end_date)]
+
+        # Find the array indices corresponding to each special date.
+        indexer = session_labels.get_indexer(offsets.index)
+
+        # -1 indicates that no corresponding entry was found.  If any -1s are
+        # present, then we have special dates that doesn't correspond to any
+        # trading day.
+        if -1 in indexer and strict:
+            bad_dates = list(offsets.index[indexer == -1])
+            raise ValueError("Special dates %s are not trading days." % bad_dates)
+
+        special_opens_or_closes = opens_or_closes[indexer] + offsets
+
+        # Short circuit when nothing to apply.
+        if not len(special_opens_or_closes):
+            return
+
+        # NOTE: This is a slightly dirty hack.  We're in-place overwriting the
+        # internal data of an Index, which is conceptually immutable.  Since we're
+        # maintaining sorting, this should be ok, but this is a good place to
+        # sanity check if things start going haywire with calendar computations.
+        opens_or_closes.values[indexer] = special_opens_or_closes.values
+
+    def _calculate_and_overwrite_special_offsets(self, session_labels, start, end):
+        _special_offsets = self.special_offsets
+        _special_offsets_adhoc = self.special_offsets_adhoc
+
+        _special_open_offsets = [
+            (t[0], t[-1]) for t in _special_offsets if t[0] is not None
+        ]
+        _special_open_offsets_adhoc = [
+            (t[0], t[-1]) for t in _special_offsets_adhoc if t[0] is not None
+        ]
+        _special_break_start_offsets = [
+            (t[1], t[-1]) for t in _special_offsets if t[1] is not None
+        ]
+        _special_break_start_offsets_adhoc = [
+            (t[1], t[-1]) for t in _special_offsets_adhoc if t[1] is not None
+        ]
+        _special_break_end_offsets = [
+            (t[2], t[-1]) for t in _special_offsets if t[2] is not None
+        ]
+        _special_break_end_offsets_adhoc = [
+            (t[2], t[-1]) for t in _special_offsets_adhoc if t[2] is not None
+        ]
+        _special_close_offsets = [
+            (t[3], t[-1]) for t in _special_offsets if t[3] is not None
+        ]
+        _special_close_offsets_adhoc = [
+            (t[3], t[-1]) for t in _special_offsets_adhoc if t[3] is not None
+        ]
+
+        self._overwrite_special_offsets(
+            session_labels,
+            self._opens,
+            _special_open_offsets,
+            _special_open_offsets_adhoc,
+            start,
+            end,
+        )
+        self._overwrite_special_offsets(
+            session_labels,
+            self._break_starts,
+            _special_break_start_offsets,
+            _special_break_start_offsets_adhoc,
+            start,
+            end,
+        )
+        self._overwrite_special_offsets(
+            session_labels,
+            self._break_ends,
+            _special_break_end_offsets,
+            _special_break_end_offsets_adhoc,
+            start,
+            end,
+        )
+        self._overwrite_special_offsets(
+            session_labels,
+            self._closes,
+            _special_close_offsets,
+            _special_close_offsets_adhoc,
+            start,
+            end,
+        )
+
 
 def _check_breaks_match(market_break_starts_nanos, market_break_ends_nanos):
     """Checks that market_break_starts_nanos and market_break_ends_nanos
@@ -1271,9 +1422,7 @@ def scheduled_special_times(calendar, start, end, time, tz):
     )
 
 
-def _overwrite_special_dates(
-    session_labels, opens_or_closes, special_opens_or_closes
-):
+def _overwrite_special_dates(session_labels, opens_or_closes, special_opens_or_closes):
     """
     Overwrite dates in open_or_closes with corresponding dates in
     special_opens_or_closes, using session_labels for alignment.
@@ -1328,8 +1477,7 @@ def _remove_breaks_for_special_dates(
         raise ValueError(
             "Found misaligned dates while building calendar.\n"
             "Expected session_labels to be the same length as break_starts,\n"
-            "but len(session_labels)=%d, len(break_start_or_end)=%d"
-            % (len_m, len_oc)
+            "but len(session_labels)=%d, len(break_start_or_end)=%d" % (len_m, len_oc)
         )
 
     # Find the array indices corresponding to each special date.

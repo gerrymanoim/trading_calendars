@@ -34,7 +34,11 @@ def days_at_time(days, t, tz, day_offset=0):
      '2016-03-13 12:45:00+00:00',
      '2016-03-14 12:45:00+00:00']
     """
+    if t is None:
+        return pd.DatetimeIndex([None for _ in days]).tz_localize(UTC)
+
     days = pd.DatetimeIndex(days).tz_localize(None)
+
     if len(days) == 0:
         return days.tz_localize(UTC)
 

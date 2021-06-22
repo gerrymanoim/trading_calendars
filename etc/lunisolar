@@ -33,8 +33,7 @@ from novas.compat import eph_manager
 
 @contextlib.contextmanager
 def ephemeris():
-    """A context manager for managing the novas ephemeris file.
-    """
+    """A context manager for managing the novas ephemeris file."""
     eph_manager.ephem_open()
     try:
         yield
@@ -59,7 +58,7 @@ def load_precomputed_data(root_dir):
     """
     root_dir = pathlib.Path(root_dir)
 
-    pattern = re.compile(r'(.*)_(.*)')
+    pattern = re.compile(r"(.*)_(.*)")
     files = [(p, pattern.match(p.name)) for p in root_dir.iterdir()]
     files = list(filter(lambda t: t[1] is not None, files))
     files = sorted(files, key=lambda t: np.datetime64(t[1][1]))
@@ -68,11 +67,13 @@ def load_precomputed_data(root_dir):
     minutes = []
     for path, match in files:
         values.append(np.fromfile(str(path)))
-        minutes.append(np.arange(
-            match[1],
-            np.datetime64(match[2]) + np.timedelta64(1, 'm'),
-            dtype='M8[m]',
-        ))
+        minutes.append(
+            np.arange(
+                match[1],
+                np.datetime64(match[2]) + np.timedelta64(1, "m"),
+                dtype="M8[m]",
+            )
+        )
 
     return np.hstack(values), np.hstack(minutes)
 
@@ -92,7 +93,7 @@ def smooth(arr, window):
     smoothed : np.ndarray
         The smoothed array of length ``len(arr) - window // 2``.
     """
-    return np.convolve(np.ones(window) / window, arr, mode='valid')
+    return np.convolve(np.ones(window) / window, arr, mode="valid")
 
 
 def local_cmp(f, arr):
@@ -129,8 +130,7 @@ def local_cmp(f, arr):
     array([ 4.75998887,  4.82345539,  4.56958931,  4.63305583,  4.69652235])
     """
     return np.flatnonzero(
-        np.r_[False, f(arr[1:], arr[:-1])] &
-        np.r_[f(arr[:-1], arr[1:]), False]
+        np.r_[False, f(arr[1:], arr[:-1])] & np.r_[f(arr[:-1], arr[1:]), False]
     )
 
 
@@ -172,18 +172,18 @@ def utc_to_jd_tt(ts):
     # lookup the corrections stored on this function object
     corrections = utc_to_jd_tt.corrections
 
-    jd_utc = ts.astype('M8[s]').view('i8') / 86400 + 2440587.5
+    jd_utc = ts.astype("M8[s]").view("i8") / 86400 + 2440587.5
     correction_ix = np.searchsorted(
-        corrections['time'],
+        corrections["time"],
         ts,
-        side='right',
+        side="right",
     )
     correction_ix[correction_ix == len(corrections)] -= 1
-    return jd_utc + corrections['julian_days'][correction_ix]
+    return jd_utc + corrections["julian_days"][correction_ix]
 
 
 def T(year, month, day):
-    return np.datetime64(f'{year}-{month:02d}-{day:02d}', 'D')
+    return np.datetime64(f"{year}-{month:02d}-{day:02d}", "D")
 
 
 # UTC to JD TT adjustment factors from:
@@ -764,10 +764,10 @@ utc_to_jd_tt.corrections = np.array(
         (T(2025, 9, 1), 72.0),
         (T(2026, 1, 1), 72.0),
     ],
-    dtype=[('time', 'M8[D]'), ('julian_days', 'f8')],
+    dtype=[("time", "M8[D]"), ("julian_days", "f8")],
 )
 # seconds in a julian day
-utc_to_jd_tt.corrections['julian_days'] /= 60 * 60 * 24
+utc_to_jd_tt.corrections["julian_days"] /= 60 * 60 * 24
 
 
 def compute_ecliptic_longitude(ob, minutes):
@@ -787,16 +787,18 @@ def compute_ecliptic_longitude(ob, minutes):
     -----
     The ``novas`` ephemeris must be opened before this can be called.
     """
-    longitude_degrees = np.array([
-        novas.equ2ecl(
-            jd_tt,
-            # right ascension and declination
-            *novas.app_planet(jd_tt, ob)[:2],
-            # true equator and equinox of date
-            coord_sys=1,
-        )[0]
-        for jd_tt in utc_to_jd_tt(minutes)
-    ])
+    longitude_degrees = np.array(
+        [
+            novas.equ2ecl(
+                jd_tt,
+                # right ascension and declination
+                *novas.app_planet(jd_tt, ob)[:2],
+                # true equator and equinox of date
+                coord_sys=1,
+            )[0]
+            for jd_tt in utc_to_jd_tt(minutes)
+        ]
+    )
     return np.deg2rad(longitude_degrees)
 
 
@@ -810,9 +812,9 @@ def lunar_ecliptic_longitude_block(root, minutes):
     minutes : np.array[M8[m]]
         The minutes to compute the moon phase for.
     """
-    ob = novas.make_object(0, 11, 'Moon', None)
+    ob = novas.make_object(0, 11, "Moon", None)
     el = compute_ecliptic_longitude(ob, minutes)
-    path = str(root / f'{minutes[0]}_{minutes[-1]}')
+    path = str(root / f"{minutes[0]}_{minutes[-1]}")
     el.tofile(str(path))
 
 
@@ -826,7 +828,7 @@ def print_dates(dates, *, weekday):
     weekday : bool
         Print the day of the week in a second column?
     """
-    dates = dates.astype('M8[D]')
+    dates = dates.astype("M8[D]")
 
     if weekday:
         weekdays = pd.to_datetime(dates).weekday_name
@@ -845,46 +847,43 @@ def main():
     """
 
 
-@main.command('lunar-ecliptic-longitude')
+@main.command("lunar-ecliptic-longitude")
 @click.option(
-    '--root-dir',
+    "--root-dir",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to save the data to.',
-    default='lunar-ecliptic-longitude',
+    help="The root dir to save the data to.",
+    default="lunar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '--verbose/--quiet',
+    "--verbose/--quiet",
     default=False,
 )
 @click.option(
-    '--start',
-    help='The start date to compute.',
-    default='1980-01-01',
+    "--start",
+    help="The start date to compute.",
+    default="1980-01-01",
 )
 @click.option(
-    '--stop',
-    help='The stop date to compute.',
-    default='2050-01-01',
+    "--stop",
+    help="The stop date to compute.",
+    default="2050-01-01",
 )
 def lunar_ecliptic_longitude(root_dir, verbose, start, stop):
-    """Simulate the ecliptic longitude of the moon.
-    """
+    """Simulate the ecliptic longitude of the moon."""
     root_dir = pathlib.Path(root_dir)
     root_dir.mkdir(parents=True, exist_ok=True)
 
     with ephemeris():
-        minutes = np.arange(start, stop, dtype='M8[m]')
+        minutes = np.arange(start, stop, dtype="M8[m]")
         for minutes in toolz.partition_all(60 * 24 * 365, minutes):
             if verbose:
-                print(f'start={minutes[0]}; stop={minutes[-1]}')
+                print(f"start={minutes[0]}; stop={minutes[-1]}")
 
             lunar_ecliptic_longitude_block(root_dir, np.array(minutes))
 
 
-def calculate_new_moon(solar_ecliptic_longitude,
-                       lunar_ecliptic_longitude,
-                       minutes):
+def calculate_new_moon(solar_ecliptic_longitude, lunar_ecliptic_longitude, minutes):
     """Calculate when the new moon will occur.
 
     Parameters
@@ -908,10 +907,9 @@ def calculate_new_moon(solar_ecliptic_longitude,
     return minutes[new_moon_where]
 
 
-def load_new_moons(solar_ecliptic_longitude,
-                   lunar_ecliptic_longitude,
-                   *,
-                   return_solar_data=False):
+def load_new_moons(
+    solar_ecliptic_longitude, lunar_ecliptic_longitude, *, return_solar_data=False
+):
     """Load the new moon minutes from the precomputed data.
 
     Parameters
@@ -933,7 +931,7 @@ def load_new_moons(solar_ecliptic_longitude,
 
     if not np.all(solar_minutes == lunar_minutes):
         raise ValueError(
-            'mismatched minutes for solar and lunar ecliptic longitude',
+            "mismatched minutes for solar and lunar ecliptic longitude",
         )
 
     new_moons = calculate_new_moon(
@@ -948,31 +946,30 @@ def load_new_moons(solar_ecliptic_longitude,
     return new_moons
 
 
-@main.command('new-moon')
+@main.command("new-moon")
 @click.option(
-    '--solar-ecliptic-longitude',
+    "--solar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read solar ecliptic longitude data from.',
-    default='solar-ecliptic-longitude',
+    help="The root dir to read solar ecliptic longitude data from.",
+    default="solar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '--lunar-ecliptic-longitude',
+    "--lunar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read lunar ecliptic longitude data from.',
-    default='lunar-ecliptic-longitude',
+    help="The root dir to read lunar ecliptic longitude data from.",
+    default="lunar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '-o',
-    '--output',
-    type=click.File('w'),
+    "-o",
+    "--output",
+    type=click.File("w"),
     default=None,
-    help='The output to write the array of the minutes for each new moon.',
+    help="The output to write the array of the minutes for each new moon.",
 )
 def new_moon(solar_ecliptic_longitude, lunar_ecliptic_longitude, output):
-    """Calculate the minute of each new moon.
-    """
+    """Calculate the minute of each new moon."""
     new_moon_minutes = load_new_moons(
         solar_ecliptic_longitude,
         lunar_ecliptic_longitude,
@@ -991,45 +988,44 @@ def solar_ecliptic_longitude_block(root, minutes):
     minutes : np.array[M8[m]]
         The minutes to compute the sun's position.
     """
-    ob = novas.make_object(0, 10, 'Sun', None)
+    ob = novas.make_object(0, 10, "Sun", None)
     el = compute_ecliptic_longitude(ob, minutes)
-    path = str(root / f'{minutes[0]}_{minutes[-1]}')
+    path = str(root / f"{minutes[0]}_{minutes[-1]}")
     el.tofile(str(path))
 
 
-@main.command('solar-ecliptic-longitude')
+@main.command("solar-ecliptic-longitude")
 @click.option(
-    '--root-dir',
+    "--root-dir",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to save the data to.',
-    default='solar-ecliptic-longitude',
+    help="The root dir to save the data to.",
+    default="solar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '--verbose/--quiet',
+    "--verbose/--quiet",
     default=False,
 )
 @click.option(
-    '--start',
-    help='The start date to compute.',
-    default='1980-01-01',
+    "--start",
+    help="The start date to compute.",
+    default="1980-01-01",
 )
 @click.option(
-    '--stop',
-    help='The stop date to compute.',
-    default='2050-01-01',
+    "--stop",
+    help="The stop date to compute.",
+    default="2050-01-01",
 )
 def solar_solar_ecliptic_longitude(root_dir, verbose, start, stop):
-    """Simulate the ecliptic longitude of the sun.
-    """
+    """Simulate the ecliptic longitude of the sun."""
     root_dir = pathlib.Path(root_dir)
     root_dir.mkdir(parents=True, exist_ok=True)
 
     with ephemeris():
-        minutes = np.arange(start, stop, dtype='M8[m]')
+        minutes = np.arange(start, stop, dtype="M8[m]")
         for minutes in toolz.partition_all(60 * 24 * 365, minutes):
             if verbose:
-                print(f'start={minutes[0]}; stop={minutes[-1]}')
+                print(f"start={minutes[0]}; stop={minutes[-1]}")
 
             solar_ecliptic_longitude_block(root_dir, np.array(minutes))
 
@@ -1054,7 +1050,7 @@ def minutes_at_phase(longitude, minutes, phase):
     return minutes[local_cmp(op.lt, np.abs(longitude - phase))]
 
 
-def calculate_new_year(solar_longitude, minutes_for_longitude,  new_moons):
+def calculate_new_year(solar_longitude, minutes_for_longitude, new_moons):
     """Calculate the Chinese new year new moon times.
 
     Parameters
@@ -1093,46 +1089,44 @@ def utc_to_chinese_date(arr):
         An array of datetime64[ns] at midnight corresponding the date in China
         of the input.
     """
-    ts = pd.to_datetime(arr).tz_localize('UTC').tz_convert('Asia/Shanghai')
+    ts = pd.to_datetime(arr).tz_localize("UTC").tz_convert("Asia/Shanghai")
     out = ts.normalize().tz_localize(None)
     if isinstance(out, pd.Timestamp):
         return out.asm8
     return out.values
 
 
-@main.command('chinese-new-year')
+@main.command("chinese-new-year")
 @click.option(
-    '--lunar-ecliptic-longitude',
+    "--lunar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read lunar ecliptic longitude data from.',
-    default='lunar-ecliptic-longitude',
+    help="The root dir to read lunar ecliptic longitude data from.",
+    default="lunar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '--solar-ecliptic-longitude',
+    "--solar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read solar ecliptic longitude data from.',
-    default='solar-ecliptic-longitude',
+    help="The root dir to read solar ecliptic longitude data from.",
+    default="solar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '-o',
-    '--output',
-    type=click.File('w'),
+    "-o",
+    "--output",
+    type=click.File("w"),
     default=None,
-    help='The output to write the dates of the Chinese New Year.',
+    help="The output to write the dates of the Chinese New Year.",
 )
 @click.option(
-    '--weekday/--no-weekday',
+    "--weekday/--no-weekday",
     default=False,
-    help='If printing to stdout, include the weekday?',
+    help="If printing to stdout, include the weekday?",
 )
-def chinese_new_year(lunar_ecliptic_longitude,
-                     solar_ecliptic_longitude,
-                     output,
-                     weekday):
-    """Calculate the Gregorian date of Chinese New Year.
-    """
+def chinese_new_year(
+    lunar_ecliptic_longitude, solar_ecliptic_longitude, output, weekday
+):
+    """Calculate the Gregorian date of Chinese New Year."""
     new_moons, solar_elon, solar_minutes = load_new_moons(
         solar_ecliptic_longitude,
         lunar_ecliptic_longitude,
@@ -1152,29 +1146,28 @@ def chinese_new_year(lunar_ecliptic_longitude,
         chinese_new_year.tofile(output)
 
 
-@main.command('qingming-festival')
+@main.command("qingming-festival")
 @click.option(
-    '--solar-ecliptic-longitude',
+    "--solar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read solar ecliptic longitude data from.',
-    default='solar-ecliptic-longitude',
+    help="The root dir to read solar ecliptic longitude data from.",
+    default="solar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '-o',
-    '--output',
-    type=click.File('w'),
+    "-o",
+    "--output",
+    type=click.File("w"),
     default=None,
-    help='The output to write the dates of the Qingming Festival.',
+    help="The output to write the dates of the Qingming Festival.",
 )
 @click.option(
-    '--weekday/--no-weekday',
+    "--weekday/--no-weekday",
     default=False,
-    help='If printing to stdout, include the weekday?',
+    help="If printing to stdout, include the weekday?",
 )
 def qingming_festival(solar_ecliptic_longitude, output, weekday):
-    """Calculate the Gregorian date of Qingming Festival.
-    """
+    """Calculate the Gregorian date of Qingming Festival."""
     longitude, minutes = load_precomputed_data(solar_ecliptic_longitude)
 
     # The Qingming (清明) festival is celebrated on the calendar day of the
@@ -1190,11 +1183,9 @@ def qingming_festival(solar_ecliptic_longitude, output, weekday):
         qingming_festival_date.tofile(output)
 
 
-def chinese_month_start(new_moons,
-                        solar_longitude,
-                        minutes,
-                        *,
-                        return_11th_month=False):
+def chinese_month_start(
+    new_moons, solar_longitude, minutes, *, return_11th_month=False
+):
     """Get the start date of each lunar month (excluding leap months).
 
     Parameters
@@ -1219,8 +1210,8 @@ def chinese_month_start(new_moons,
         3 * np.pi / 2,
     )
     sui_start_index = (
-        utc_to_chinese_date(new_moons) >
-        utc_to_chinese_date(winter_solstice).reshape(-1, 1)
+        utc_to_chinese_date(new_moons)
+        > utc_to_chinese_date(winter_solstice).reshape(-1, 1)
     ).argmax(axis=1) - 1
 
     get_next_sui_ix = iter(sui_start_index).__next__
@@ -1238,8 +1229,7 @@ def chinese_month_start(new_moons,
         0,
     )[1:]
     contains_zhongqi_ix = (
-        utc_to_chinese_date(zhongqi).reshape(-1, 1) <
-        utc_to_chinese_date(new_moons)
+        utc_to_chinese_date(zhongqi).reshape(-1, 1) < utc_to_chinese_date(new_moons)
     ).argmax(axis=1) - 1
     months_with_zhongqi = np.unique(new_moons[contains_zhongqi_ix])
     possible_skipped_months = np.setdiff1d(new_moons, months_with_zhongqi)
@@ -1250,11 +1240,11 @@ def chinese_month_start(new_moons,
 
         possible_skipped_month = new_moon in possible_skipped_months
         skip = (
-            possible_skipped_month and
-            not seen_skipped_month and
+            possible_skipped_month
+            and not seen_skipped_month
             # check the number of new moons between the two sui to guard
             # against fake leap months (e.g. 8th month of 2033)
-            next_sui_ix - prev_sui_ix != 12
+            and next_sui_ix - prev_sui_ix != 12
         )
 
         if new_moon == next_sui:
@@ -1273,17 +1263,13 @@ def chinese_month_start(new_moons,
 
     month_starts = np.array(month_starts)
     if return_11th_month:
-        return (
-            month_starts,
-            np.searchsorted(month_starts, new_moons[sui_start_index])
-        )
+        return (month_starts, np.searchsorted(month_starts, new_moons[sui_start_index]))
     return month_starts
 
 
-def nth_day_of_nth_chinese_month(lunar_ecliptic_longitude,
-                                 solar_ecliptic_longitude,
-                                 month,
-                                 day):
+def nth_day_of_nth_chinese_month(
+    lunar_ecliptic_longitude, solar_ecliptic_longitude, month, day
+):
     """Helper for computing the nth day of the nth lunar month from the cached
     data.
 
@@ -1320,42 +1306,40 @@ def nth_day_of_nth_chinese_month(lunar_ecliptic_longitude,
     # subtract one from month because it is 1-indexed
     month_start = utc_to_chinese_date(months[new_year_month_ix + (month - 1)])
     # subtract one from day because it is 1-indexed.
-    return month_start + np.timedelta64(day - 1, 'D')
+    return month_start + np.timedelta64(day - 1, "D")
 
 
-@main.command('china-buddhas-birthday')
+@main.command("china-buddhas-birthday")
 @click.option(
-    '--lunar-ecliptic-longitude',
+    "--lunar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read lunar ecliptic longitude data from.',
-    default='lunar-ecliptic-longitude',
+    help="The root dir to read lunar ecliptic longitude data from.",
+    default="lunar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '--solar-ecliptic-longitude',
+    "--solar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read solar ecliptic longitude data from.',
-    default='solar-ecliptic-longitude',
+    help="The root dir to read solar ecliptic longitude data from.",
+    default="solar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '-o',
-    '--output',
-    type=click.File('w'),
+    "-o",
+    "--output",
+    type=click.File("w"),
     default=None,
     help="The output to write the dates of Buddha's Birthday.",
 )
 @click.option(
-    '--weekday/--no-weekday',
+    "--weekday/--no-weekday",
     default=False,
-    help='If printing to stdout, include the weekday?',
+    help="If printing to stdout, include the weekday?",
 )
-def china_buddhas_birthday(lunar_ecliptic_longitude,
-                           solar_ecliptic_longitude,
-                           output,
-                           weekday):
-    """Calculate the Gregorian date of China's observance of Buddha's Birthday.
-    """
+def china_buddhas_birthday(
+    lunar_ecliptic_longitude, solar_ecliptic_longitude, output, weekday
+):
+    """Calculate the Gregorian date of China's observance of Buddha's Birthday."""
     # Buddhas birthday is the 8th day (one indexed) of the 4th chinese lunar
     # month (not counting leap months).
     buddhas_birthday = nth_day_of_nth_chinese_month(
@@ -1370,39 +1354,37 @@ def china_buddhas_birthday(lunar_ecliptic_longitude,
         buddhas_birthday.tofile(output)
 
 
-@main.command('dragon-boat-festival')
+@main.command("dragon-boat-festival")
 @click.option(
-    '--lunar-ecliptic-longitude',
+    "--lunar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read lunar ecliptic longitude data from.',
-    default='lunar-ecliptic-longitude',
+    help="The root dir to read lunar ecliptic longitude data from.",
+    default="lunar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '--solar-ecliptic-longitude',
+    "--solar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read solar ecliptic longitude data from.',
-    default='solar-ecliptic-longitude',
+    help="The root dir to read solar ecliptic longitude data from.",
+    default="solar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '-o',
-    '--output',
-    type=click.File('w'),
+    "-o",
+    "--output",
+    type=click.File("w"),
     default=None,
-    help='The output to write the dates of the Dragon Boat Festival.',
+    help="The output to write the dates of the Dragon Boat Festival.",
 )
 @click.option(
-    '--weekday/--no-weekday',
+    "--weekday/--no-weekday",
     default=False,
-    help='If printing to stdout, include the weekday?',
+    help="If printing to stdout, include the weekday?",
 )
-def dragon_boat_festival(lunar_ecliptic_longitude,
-                         solar_ecliptic_longitude,
-                         output,
-                         weekday):
-    """Calculate the Gregorian date of the Dragon Boat Festival.
-    """
+def dragon_boat_festival(
+    lunar_ecliptic_longitude, solar_ecliptic_longitude, output, weekday
+):
+    """Calculate the Gregorian date of the Dragon Boat Festival."""
     # The Dragon Boat Festival is the 5th day of the 5th month.
     # month (not counting leap months).
     dragon_boat_festival = nth_day_of_nth_chinese_month(
@@ -1417,39 +1399,37 @@ def dragon_boat_festival(lunar_ecliptic_longitude,
         dragon_boat_festival.tofile(output)
 
 
-@main.command('mid-autumn-festival')
+@main.command("mid-autumn-festival")
 @click.option(
-    '--lunar-ecliptic-longitude',
+    "--lunar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read lunar ecliptic longitude data from.',
-    default='lunar-ecliptic-longitude',
+    help="The root dir to read lunar ecliptic longitude data from.",
+    default="lunar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '--solar-ecliptic-longitude',
+    "--solar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read solar ecliptic longitude data from.',
-    default='solar-ecliptic-longitude',
+    help="The root dir to read solar ecliptic longitude data from.",
+    default="solar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '-o',
-    '--output',
-    type=click.File('w'),
+    "-o",
+    "--output",
+    type=click.File("w"),
     default=None,
-    help='The output to write the dates of the Mid Autumn Festival.',
+    help="The output to write the dates of the Mid Autumn Festival.",
 )
 @click.option(
-    '--weekday/--no-weekday',
+    "--weekday/--no-weekday",
     default=False,
-    help='If printing to stdout, include the weekday?',
+    help="If printing to stdout, include the weekday?",
 )
-def mid_autumn_festival(lunar_ecliptic_longitude,
-                        solar_ecliptic_longitude,
-                        output,
-                        weekday):
-    """Calculate the Gregorian date of the Mid Autumn Festival.
-    """
+def mid_autumn_festival(
+    lunar_ecliptic_longitude, solar_ecliptic_longitude, output, weekday
+):
+    """Calculate the Gregorian date of the Mid Autumn Festival."""
     # The Mid Autumn Festival is the 15th day of the 8th month.
     # month (not counting leap months).
     mid_autumn_festival = nth_day_of_nth_chinese_month(
@@ -1464,39 +1444,37 @@ def mid_autumn_festival(lunar_ecliptic_longitude,
         mid_autumn_festival.tofile(output)
 
 
-@main.command('double-ninth-festival')
+@main.command("double-ninth-festival")
 @click.option(
-    '--lunar-ecliptic-longitude',
+    "--lunar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read lunar ecliptic longitude data from.',
-    default='lunar-ecliptic-longitude',
+    help="The root dir to read lunar ecliptic longitude data from.",
+    default="lunar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '--solar-ecliptic-longitude',
+    "--solar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read solar ecliptic longitude data from.',
-    default='solar-ecliptic-longitude',
+    help="The root dir to read solar ecliptic longitude data from.",
+    default="solar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '-o',
-    '--output',
-    type=click.File('w'),
+    "-o",
+    "--output",
+    type=click.File("w"),
     default=None,
-    help='The output to write the dates of the Double Ninth Festival.',
+    help="The output to write the dates of the Double Ninth Festival.",
 )
 @click.option(
-    '--weekday/--no-weekday',
+    "--weekday/--no-weekday",
     default=False,
-    help='If printing to stdout, include the weekday?',
+    help="If printing to stdout, include the weekday?",
 )
-def double_ninth_festival(lunar_ecliptic_longitude,
-                          solar_ecliptic_longitude,
-                          output,
-                          weekday):
-    """Calculate the Gregorian date of the Double Ninth Festival.
-    """
+def double_ninth_festival(
+    lunar_ecliptic_longitude, solar_ecliptic_longitude, output, weekday
+):
+    """Calculate the Gregorian date of the Double Ninth Festival."""
     # The Double Ninth Festival is the 9th day of the 9th month.
     # month (not counting leap months).
     double_ninth_festival = nth_day_of_nth_chinese_month(
@@ -1519,27 +1497,27 @@ def _render_month(year, months, month, *, print_year):
     # subtract one from month because it is 1-indexed
     month_start = utc_to_chinese_date(months[month - 1])
     month_end = utc_to_chinese_date(months[month])
-    days = pd.date_range(month_start, month_end, closed='left')
+    days = pd.date_range(month_start, month_end, closed="left")
 
     is_leap_month = len(days) > 30
     title = f'Lunar Month {month}{"(+)" if is_leap_month else ""}'
     if print_year:
-        title += f' {year}'
-    print(f'{title:^20}'.rstrip(), file=out)
-    gregorian_months = f'{days[0].month_name()}-{days[-1].month_name()}'
-    print(f'{gregorian_months:^20}'.rstrip(), file=out)
-    print('Su Mo Tu We Th Fr Sa', file=out)
-    print(' ' * (3 * ((days[0].weekday() + 1) % 7) - 1), end='', file=out)
+        title += f" {year}"
+    print(f"{title:^20}".rstrip(), file=out)
+    gregorian_months = f"{days[0].month_name()}-{days[-1].month_name()}"
+    print(f"{gregorian_months:^20}".rstrip(), file=out)
+    print("Su Mo Tu We Th Fr Sa", file=out)
+    print(" " * (3 * ((days[0].weekday() + 1) % 7) - 1), end="", file=out)
 
     for d in days:
         if d.weekday() == 6:
-            print('', file=out)
+            print("", file=out)
         else:
-            print(' ', end='', file=out)
+            print(" ", end="", file=out)
 
-        print(f'{d.day:>2}', end='', file=out)
+        print(f"{d.day:>2}", end="", file=out)
 
-    print('', file=out)
+    print("", file=out)
     return out.getvalue()
 
 
@@ -1549,7 +1527,7 @@ def _concat_lines(strings, width):
     for lines in as_lines:
         missing_lines = max_lines - len(lines)
         if missing_lines:
-            lines.extend([' ' * width] * missing_lines)
+            lines.extend([" " * width] * missing_lines)
 
     rows = []
     for row_parts in zip(*as_lines):
@@ -1557,34 +1535,31 @@ def _concat_lines(strings, width):
         for n, row_part in enumerate(row_parts):
             missing_space = width - len(row_part)
             if missing_space:
-                row_parts[n] = row_part + ' ' * missing_space
+                row_parts[n] = row_part + " " * missing_space
 
-        rows.append('   '.join(row_parts))
+        rows.append("   ".join(row_parts))
 
-    return '\n'.join(row.rstrip() for row in rows)
+    return "\n".join(row.rstrip() for row in rows)
 
 
-@main.command('chinese-cal')
-@click.argument('month', type=int)
-@click.argument('year', type=int, required=False)
+@main.command("chinese-cal")
+@click.argument("month", type=int)
+@click.argument("year", type=int, required=False)
 @click.option(
-    '--lunar-ecliptic-longitude',
+    "--lunar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read lunar ecliptic longitude data from.',
-    default='lunar-ecliptic-longitude',
+    help="The root dir to read lunar ecliptic longitude data from.",
+    default="lunar-ecliptic-longitude",
     show_default=True,
 )
 @click.option(
-    '--solar-ecliptic-longitude',
+    "--solar-ecliptic-longitude",
     type=click.Path(dir_okay=True, file_okay=False),
-    help='The root dir to read solar ecliptic longitude data from.',
-    default='solar-ecliptic-longitude',
+    help="The root dir to read solar ecliptic longitude data from.",
+    default="solar-ecliptic-longitude",
     show_default=True,
 )
-def chinese_cal(month,
-                year,
-                lunar_ecliptic_longitude,
-                solar_ecliptic_longitude):
+def chinese_cal(month, year, lunar_ecliptic_longitude, solar_ecliptic_longitude):
     """Print a unix cal like table for a Chinese lunar month. The day numbers
     are the Gregorian days of their Gregorian month.
     """
@@ -1608,10 +1583,10 @@ def chinese_cal(month,
         new_moons,
     )
     given_new_year = chinese_new_year[
-        chinese_new_year.astype('M8[Y]') == np.datetime64(year - 1970, 'Y')
+        chinese_new_year.astype("M8[Y]") == np.datetime64(year - 1970, "Y")
     ]
     if len(given_new_year) == 0:
-        raise ValueError(f'data does not contain {year}')
+        raise ValueError(f"data does not contain {year}")
 
     new_year_month_ix = np.searchsorted(months, given_new_year[0])
     year_months = months[new_year_month_ix:]
@@ -1631,9 +1606,9 @@ def chinese_cal(month,
             ]
             for row in range(4)
         ]
-        print(f'{year:^66}\n'.rstrip())
-        print('\n\n'.join(_concat_lines(cs, 20) for cs in month_strings))
+        print(f"{year:^66}\n".rstrip())
+        print("\n\n".join(_concat_lines(cs, 20) for cs in month_strings))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

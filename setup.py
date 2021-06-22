@@ -41,11 +41,12 @@ classifiers = [
 
 reqs = [
     "numpy",
-    "pandas>=1.0",
+    "pandas>=1.1",
     "pyluach",
     "python-dateutil",
     "pytz",
     "toolz",
+    "korean_lunar_calendar",
 ]
 
 with open("README.md") as f:
