@@ -19,6 +19,9 @@ class XKRXCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
     MAX_SESSION_HOURS = 6.5
     HAVE_EARLY_CLOSES = False
 
+    # has breaks prior to 2000-05-22
+    HAVE_BREAKS = True
+
     @classmethod
     def setup_class(cls):
         super().setup_class()
