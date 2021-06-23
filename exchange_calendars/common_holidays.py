@@ -17,25 +17,39 @@ def new_years_day(start_date=None, end_date=None, observance=None, days_of_week=
     )
 
 
-def new_years_eve(start_date=None, end_date=None, observance=None, days_of_week=None):
+def new_years_eve(
+    start_date=None,
+    end_date=None,
+    observance=None,
+    days_of_week=None,
+    offset=None,
+):
     return Holiday(
         "New Year's Eve",
         month=12,
         day=31,
         start_date=start_date,
         end_date=end_date,
+        offset=offset,
         observance=observance,
         days_of_week=days_of_week,
     )
 
 
-def epiphany(start_date=None, end_date=None, observance=None, days_of_week=None):
+def epiphany(
+    start_date=None,
+    end_date=None,
+    observance=None,
+    days_of_week=None,
+    offset=None,
+):
     return Holiday(
         "Epiphany",
         month=1,
         day=6,
         start_date=start_date,
         end_date=end_date,
+        offset=offset,
         observance=observance,
         days_of_week=days_of_week,
     )

@@ -42,7 +42,7 @@ next_monday_offset = DateOffset(weekday=MO(1))
 
 NewYearsDay = new_years_day()
 
-Epiphany = epiphany(observance=next_monday_offset)
+Epiphany = epiphany(offset=next_monday_offset)
 
 StJosephsDay = Holiday(
     "St. Joseph's Day (next Monday)",
@@ -117,7 +117,7 @@ CartagenaIndependenceDay = Holiday(
     "Cartagena Independence Day",
     month=11,
     day=11,
-    observance=next_monday_offset,
+    offset=next_monday_offset,
 )
 
 ImmaculateConception = immaculate_conception()

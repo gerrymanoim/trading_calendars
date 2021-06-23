@@ -53,7 +53,7 @@ class CMESExchangeCalendar(ExchangeCalendar):
     - Christmas
     """
 
-    name = "CME"
+    name = "CMES"
 
     tz = timezone("America/Chicago")
 
