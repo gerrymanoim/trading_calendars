@@ -103,3 +103,22 @@ class CalendarAliasTestCase(TestCase):
             sorted(self.dispatcher.get_calendar_names()),
             ["IEPA", "IEPA_ALIAS", "IEPA_ALIAS_ALIAS"],
         )
+        self.assertEqual(
+            self.dispatcher.get_calendar_names(include_aliases=False),
+            ["IEPA"],
+        )
+
+    def test_aliases_to_names(self):
+        self.assertDictEqual(
+            self.dispatcher.aliases_to_names(),
+            {
+                "IEPA_ALIAS": "IEPA",
+                "IEPA_ALIAS_ALIAS": "IEPA",
+            },
+        )
+
+    def test_names_to_aliases(self):
+        self.assertDictEqual(
+            self.dispatcher.names_to_aliases(),
+            {"IEPA": ["IEPA_ALIAS", "IEPA_ALIAS_ALIAS"]},
+        )

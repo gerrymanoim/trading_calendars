@@ -1,4 +1,4 @@
-import itertools
+from __future__ import annotations
 
 from .always_open import AlwaysOpenCalendar
 from .errors import CalendarNameCollision, CyclicCalendarAlias, InvalidCalendarName
@@ -196,24 +196,32 @@ class ExchangeCalendarDispatcher(object):
         calendar = self._calendars[canonical_name] = factory()
         return calendar
 
-    def get_calendar_names(self):
-        """
-        Returns all the calendars we know about or know how to make
+    def get_calendar_names(self, include_aliases: bool = True) -> list[str]:
+        """Return all canoncial calendar names and, optionally, aliases.
+
+        Parameters
+        ----------
+        include_aliases : default: True
+            True to include calendar aliases.
+            False to return only canonical calendar names.
 
         Returns
         -------
-        calendar_names: List[str]
-            A list of all the calendars we know about or know how to make
+        list of str
+            List of canonical calendar names and, optionally, aliases.
+
+        See Also
+        --------
+        names_to_aliases : Mapping of cononcial names to aliases.
+        aliases_to_names : Mapping of aliases to canoncial names.
+        resolve_alias : Resolve single alias to a canonical name.
         """
-        return list(
-            set(
-                itertools.chain(
-                    self._calendars.keys(),
-                    self._calendar_factories.keys(),
-                    self._aliases.keys(),
-                )
-            )
-        )
+        keys = set(self._calendar_factories.keys()).union(set(self._calendars.keys()))
+        if include_aliases:
+            keys = keys.union(set(self._aliases.keys()))
+        names = list(keys)
+        names.sort()
+        return names
 
     def has_calendar(self, name):
         """
@@ -322,19 +330,25 @@ class ExchangeCalendarDispatcher(object):
             del self._aliases[alias]
             raise
 
-    def resolve_alias(self, name):
-        """
-        Resolve a calendar alias for retrieval.
+    def resolve_alias(self, name: str):
+        """Resolve an alias to cononcial name of corresponding calendar.
+
+        A cononical name will resolve to itself.
 
         Parameters
         ----------
-        name : str
-            The name of the requested calendar.
+        name :
+            Alias or canoncial name corresponding to a calendar.
 
         Returns
         -------
         canonical_name : str
-            The real name of the calendar to create/return.
+            Canonical name of calendar that would be created for `name`.
+
+        See Also
+        --------
+        aliases_to_names : Mapping of aliases to canoncial names.
+        names_to_aliases : Mapping of cononcial names to aliases.
         """
         seen = []
 
@@ -350,13 +364,48 @@ class ExchangeCalendarDispatcher(object):
 
         return name
 
+    def aliases_to_names(self) -> dict[str, str]:
+        """Return dictionary mapping aliases to canonical names.
+
+        Returns
+        -------
+        dict of {str, str}
+            Dictionary mapping aliases to canoncial name of corresponding
+            calendar.
+
+        See Also
+        --------
+        resolve_alias : Resolve single alias to a canonical name.
+        names_to_aliases : Mapping of cononcial names to aliases.
+        """
+        return {alias: self.resolve_alias(alias) for alias in self._aliases}
+
+    def names_to_aliases(self) -> dict[str, list[str]]:
+        """Return mapping of canonical calendar names to associated aliases.
+
+        Returns
+        -------
+        dict of {str, list of str}
+            Dictionary mapping canonical calendar names to any associated
+            aliases.
+
+        See Also
+        --------
+        aliases_to_names : Mapping of aliases to canoncial names.
+        """
+        names = self.get_calendar_names(include_aliases=False)
+        dic = {name: [] for name in names}
+        for alias, name in self.aliases_to_names().items():
+            dic[name].append(alias)
+        return dic
+
     def deregister_calendar(self, name):
         """
         If a calendar is registered with the given name, it is de-registered.
 
         Parameters
         ----------
-        cal_name : str
+        name : str
             The name of the calendar to be deregistered.
         """
         self._calendars.pop(name, None)
@@ -389,3 +438,5 @@ register_calendar = global_calendar_dispatcher.register_calendar
 register_calendar_type = global_calendar_dispatcher.register_calendar_type
 register_calendar_alias = global_calendar_dispatcher.register_calendar_alias
 resolve_alias = global_calendar_dispatcher.resolve_alias
+aliases_to_names = global_calendar_dispatcher.aliases_to_names
+names_to_aliases = global_calendar_dispatcher.names_to_aliases
