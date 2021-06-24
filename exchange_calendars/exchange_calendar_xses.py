@@ -376,7 +376,7 @@ class XSESExchangeCalendar(PrecomputedExchangeCalendar):
     NOTE: For now, we are skipping the intra-day break from 12:00 to 13:00.
 
     Due to the complexity around the Singaporean holidays, we are hardcoding
-    a list of holidays covering 1986-2020, inclusive.
+    a list of holidays covering 1986-2021, inclusive.
 
     TODO: There are a handful of half-days (day before Chinese New Year,
     Christmas Eve, etc.). We will add those later.

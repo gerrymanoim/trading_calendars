@@ -22,6 +22,8 @@ from .calendar_utils import (
     register_calendar_alias,
     register_calendar_type,
     resolve_alias,
+    names_to_aliases,
+    aliases_to_names,
 )
 from .exchange_calendar import ExchangeCalendar
 
@@ -34,6 +36,8 @@ __all__ = [
     "register_calendar_alias",
     "register_calendar_type",
     "resolve_alias",
+    "names_to_aliases",
+    "aliases_to_names",
     "ExchangeCalendar",
 ]
 
