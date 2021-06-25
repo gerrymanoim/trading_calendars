@@ -345,11 +345,20 @@ class ExchangeCalendarDispatcher(object):
         canonical_name : str
             Canonical name of calendar that would be created for `name`.
 
+        Raises
+        ------
+        InvalidCalendarName
+            If `name` is not an alias or canonical name of any registered
+            calendar.
+
         See Also
         --------
         aliases_to_names : Mapping of aliases to canoncial names.
         names_to_aliases : Mapping of cononcial names to aliases.
         """
+        if name not in self.get_calendar_names(include_aliases=True):
+            raise InvalidCalendarName(calendar_name=name)
+
         seen = []
 
         while name in self._aliases:
