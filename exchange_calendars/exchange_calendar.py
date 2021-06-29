@@ -1233,7 +1233,16 @@ class ExchangeCalendar(ABC):
             return pd.Series([], dtype="datetime64[ns, UTC]")
 
         result = pd.concat(merged).sort_index()
-        return result.loc[(result >= start_date) & (result <= end_date)]
+        result = result.loc[(result >= start_date) & (result <= end_date)]
+        # exclude any special date that conincides with a holiday
+        adhoc_holidays = pd.DatetimeIndex(self.adhoc_holidays, tz="UTC")
+        result = result[~result.index.isin(adhoc_holidays)]
+        reg_holidays = self.regular_holidays.holidays(
+            start_date.tz_convert(None), end_date.tz_convert(None)
+        )
+        if not reg_holidays.empty:
+            result = result[~result.index.isin(reg_holidays.tz_localize("UTC"))]
+        return result
 
     def _calculate_special_opens(self, start, end):
         return self._special_dates(

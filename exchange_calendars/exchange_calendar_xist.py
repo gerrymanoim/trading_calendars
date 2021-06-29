@@ -177,19 +177,5 @@ class XISTExchangeCalendar(ExchangeCalendar):
 
     @property
     def special_closes_adhoc(self):
-        # Some early close days fall on holidays, so we must filter those out
-        # of the early close list
-        collisions = [
-            # CAYS Day on May 19
-            pd.Timestamp("1994-05-19"),
-            # Day before Eid al Fitr observed as holiday in 2003
-            pd.Timestamp("2003-11-24"),
-        ]
-
         early_close_days = EidAlFitrHalfDay + EidAlAdhaHalfDay
-
-        early_close_days = [day for day in early_close_days if day not in collisions]
-
-        return [
-            (self.regular_early_close, early_close_days),
-        ]
+        return [(self.regular_early_close, early_close_days)]
