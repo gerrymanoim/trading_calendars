@@ -306,7 +306,7 @@ class ExchangeCalendar(ABC):
         """
         Returns
         -------
-        list: A list of timestamps representing unplanned closes.
+        list: A list of tz-naive timestamps representing unplanned closes.
         """
         return []
 

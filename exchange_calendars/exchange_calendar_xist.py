@@ -18,7 +18,7 @@ from itertools import chain
 
 import pandas as pd
 from pandas.tseries.holiday import Holiday
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import (
     eid_al_adha_first_day,
@@ -142,15 +142,15 @@ class XISTExchangeCalendar(ExchangeCalendar):
     @property
     def adhoc_holidays(self):
         misc_adhoc = [
-            pd.Timestamp("2002-01-04", tz=UTC),  # Market Holiday
-            pd.Timestamp("2003-02-14", tz=UTC),  # Eid al Adha extra holiday
-            pd.Timestamp("2003-11-21", tz=UTC),  # Terror attacks
-            pd.Timestamp("2003-11-24", tz=UTC),  # Eid al Fitr extra holiday
-            pd.Timestamp("2003-11-28", tz=UTC),  # Eid al Fitr extra holiday
-            pd.Timestamp("2004-01-23", tz=UTC),  # Bad weather
-            pd.Timestamp("2004-12-30", tz=UTC),  # Closure for redenomination
-            pd.Timestamp("2004-12-31", tz=UTC),  # Closure for redenomination
-            pd.Timestamp("2006-01-13", tz=UTC),  # Eid al Adha extra holiday
+            pd.Timestamp("2002-01-04"),  # Market Holiday
+            pd.Timestamp("2003-02-14"),  # Eid al Adha extra holiday
+            pd.Timestamp("2003-11-21"),  # Terror attacks
+            pd.Timestamp("2003-11-24"),  # Eid al Fitr extra holiday
+            pd.Timestamp("2003-11-28"),  # Eid al Fitr extra holiday
+            pd.Timestamp("2004-01-23"),  # Bad weather
+            pd.Timestamp("2004-12-30"),  # Closure for redenomination
+            pd.Timestamp("2004-12-31"),  # Closure for redenomination
+            pd.Timestamp("2006-01-13"),  # Eid al Adha extra holiday
         ]
 
         return list(
