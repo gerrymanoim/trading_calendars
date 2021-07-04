@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
 
 NANOSECONDS_PER_MINUTE = int(6e10)
 
-NP_NAT = np.array([pd.NaT], dtype=np.int64)[0]
+NP_NAT = pd.NaT.value
 
 Session = typing.Union[pd.Timestamp, str, int, float, datetime.datetime]
 
