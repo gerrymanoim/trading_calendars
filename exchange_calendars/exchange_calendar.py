@@ -141,14 +141,22 @@ class ExchangeCalendar(ABC):
             _special_closes,
         )
 
+        if self._break_starts is None:
+            break_starts = None
+        else:
+            break_starts = self._break_starts.tz_localize(None)
+        if self._break_ends is None:
+            break_ends = None
+        else:
+            break_ends = self._break_ends.tz_localize(None)
         self.schedule = DataFrame(
             index=_all_days,
             data=OrderedDict(
                 [
-                    ("market_open", self._opens),
-                    ("break_start", self._break_starts),
-                    ("break_end", self._break_ends),
-                    ("market_close", self._closes),
+                    ("market_open", self._opens.tz_localize(None)),
+                    ("break_start", break_starts),
+                    ("break_end", break_ends),
+                    ("market_close", self._closes.tz_localize(None)),
                 ]
             ),
             dtype="datetime64[ns]",
