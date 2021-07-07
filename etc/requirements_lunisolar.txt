@@ -1,3 +1,3 @@
 click==6.7
-novas==3.1.1.4
+novas==3.1.1.5
 novas-de405==1997.1
