@@ -196,7 +196,9 @@ class ExchangeCalendarDispatcher(object):
         calendar = self._calendars[canonical_name] = factory()
         return calendar
 
-    def get_calendar_names(self, include_aliases: bool = True) -> list[str]:
+    def get_calendar_names(
+        self, include_aliases: bool = True, sort: bool = True
+    ) -> list[str]:
         """Return all canoncial calendar names and, optionally, aliases.
 
         Parameters
@@ -204,6 +206,9 @@ class ExchangeCalendarDispatcher(object):
         include_aliases : default: True
             True to include calendar aliases.
             False to return only canonical calendar names.
+
+        sort : default: True
+            Return calendar names sorted alphabetically.
 
         Returns
         -------
@@ -220,7 +225,8 @@ class ExchangeCalendarDispatcher(object):
         if include_aliases:
             keys = keys.union(set(self._aliases.keys()))
         names = list(keys)
-        names.sort()
+        if sort:
+            names.sort()
         return names
 
     def has_calendar(self, name):
@@ -356,7 +362,7 @@ class ExchangeCalendarDispatcher(object):
         aliases_to_names : Mapping of aliases to canoncial names.
         names_to_aliases : Mapping of cononcial names to aliases.
         """
-        if name not in self.get_calendar_names(include_aliases=True):
+        if name not in self.get_calendar_names(include_aliases=True, sort=False):
             raise InvalidCalendarName(calendar_name=name)
 
         seen = []
