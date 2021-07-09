@@ -98,6 +98,7 @@ LastTradingDayOfCalendarYear = Holiday(
 
 # Ad hoc closes.
 March1BadWeather = Timestamp("2018-03-01", tz=UTC)
+# Ad hoc holidays.
 March2BadWeather = Timestamp("2018-03-02")
 
 

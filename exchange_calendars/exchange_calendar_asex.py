@@ -19,7 +19,7 @@ from itertools import chain
 import pandas as pd
 from dateutil.easter import EASTER_ORTHODOX, easter
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import (
     assumption_day,
@@ -43,7 +43,7 @@ def orthodox_easter(start_date="1980", end_date="2021"):
             easter(year, method=EASTER_ORTHODOX)
             for year in range(int(start_date), int(end_date))
         ]
-    ).tz_localize(UTC)
+    )
 
 
 NewYearsDay = new_years_day()
