@@ -8,7 +8,7 @@ from pandas.tseries.holiday import (
     nearest_workday,
     next_workday,
 )
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import new_years_day, eid_al_adha_first_day
 from .exchange_calendar import (
@@ -154,12 +154,13 @@ class AIXKExchangeCalendar(ExchangeCalendar):
 
     close_times = ((None, time(17, 00)),)
 
-    # Exchange was founded in this year
-    DATE_FOUNDED = pd.Timestamp("2017-01-01", tz=UTC)
+    @property
+    def bound_start(self) -> pd.Timestamp:
+        return pd.Timestamp("2017-01-01", tz="UTC")
 
-    def __init__(self, start=DATE_FOUNDED, *args, **kwargs):
-        # Set `start` to the year when exchange was founded or pass higher value
-        super().__init__(max(self.DATE_FOUNDED, start), *args, **kwargs)
+    def _bound_start_error_msg(self, start: pd.Timestamp) -> str:
+        msg = super()._bound_start_error_msg(start)
+        return msg + f" (The exchange {self.name} was founded in 2017.)"
 
     @property
     def regular_holidays(self):

@@ -4,7 +4,6 @@ import pandas as pd
 from pytz import UTC
 
 from exchange_calendars.exchange_calendar_xnys import XNYSExchangeCalendar
-
 from .test_exchange_calendar import ExchangeCalendarTestBase
 
 
