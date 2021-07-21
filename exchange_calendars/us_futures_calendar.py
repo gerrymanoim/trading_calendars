@@ -42,7 +42,7 @@ class QuantopianUSFuturesCalendar(ExchangeCalendar):
     open_offset = -1
 
     @property
-    def _default_start(self) -> Timestamp:
+    def default_start(self) -> Timestamp:
         # XXX: Override the default start date. This is a stopgap for memory
         # issues caused by upgrading to pandas 18. This calendar is the most
         # severely affected since it has the most total minutes of any of the

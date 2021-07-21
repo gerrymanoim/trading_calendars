@@ -76,9 +76,8 @@ def _group_times(all_days, times, tz, offset=0):
 class ExchangeCalendar(ABC):
     """Representation of timing information of a single market exchange.
 
-    The timing information is made up of two parts: sessions, and
-    opens/closes (and break_starts/break_ends for exchanges that observe
-    an intraday break).
+    The timing information comprises sessions, open/close times and, for
+    exchanges that observe an intraday break, break_start/break_end times.
 
     For exchanges that do not observe an intraday break a session
     represents a contiguous set of minutes. Where an exchange observes
@@ -124,9 +123,9 @@ class ExchangeCalendar(ABC):
     out-of-bounds will raise a ValueError. The bounds of each calendar are
     exposed via the `bound_start` and `bound_end` properties.
 
-    Many calendars do not have bounds defined (`bound_start` and/or
-    `bound_end` return None). These calendars can be created through any
-    date range although it should be noted that the further back the
+    Many calendars do not have bounds defined (in these cases `bound_start`
+    and/or `bound_end` return None). These calendars can be created through
+    any date range although it should be noted that the further back the
     start date, the greater the potential for inaccuracies.
 
     In all cases, no guarantees are offered as to the accuracy of any
@@ -136,14 +135,14 @@ class ExchangeCalendar(ABC):
     def __init__(self, start: Session | None = None, end: Session | None = None):
 
         if start is None:
-            start = self._default_start
+            start = self.default_start
         else:
             start = parse_session(start, "start", strict=False)
             if self.bound_start is not None and start < self.bound_start:
                 raise ValueError(self._bound_start_error_msg(start))
 
         if end is None:
-            end = self._default_end
+            end = self.default_end
         else:
             end = parse_session(end, "end", strict=False)
             if self.bound_end is not None and end > self.bound_end:
@@ -318,14 +317,14 @@ class ExchangeCalendar(ABC):
         )
 
     @property
-    def _default_start(self) -> pd.Timestamp:
+    def default_start(self) -> pd.Timestamp:
         if self.bound_start is None:
             return GLOBAL_DEFAULT_START
         else:
             return max(GLOBAL_DEFAULT_START, self.bound_start)
 
     @property
-    def _default_end(self) -> pd.Timestamp:
+    def default_end(self) -> pd.Timestamp:
         if self.bound_end is None:
             return GLOBAL_DEFAULT_END
         else:

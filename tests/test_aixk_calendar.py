@@ -4,14 +4,18 @@ import pandas as pd
 from pytz import UTC
 
 from exchange_calendars.exchange_calendar_aixk import AIXKExchangeCalendar
-
 from .test_exchange_calendar import ExchangeCalendarTestBase
+from .test_utils import T
 
 
 class AIXKCalendarTestCase(ExchangeCalendarTestBase, TestCase):
 
     answer_key_filename = "aixk"
     calendar_class = AIXKExchangeCalendar
+
+    START_BOUND = T("2017-01-01")
+
+    SESSION_WITHOUT_BREAK = T("2021-07-14")
 
     # The AIXK is open from 11:00 to 5:00PM
     MAX_SESSION_HOURS = 6
@@ -21,13 +25,13 @@ class AIXKCalendarTestCase(ExchangeCalendarTestBase, TestCase):
     # Exchange began operating in 2019
     DAYLIGHT_SAVINGS_DATES = []
 
-    MINUTE_INDEX_TO_SESSION_LABELS_START = pd.Timestamp("2021-01-06", tz=UTC)
-    MINUTE_INDEX_TO_SESSION_LABELS_END = pd.Timestamp("2021-04-06", tz=UTC)
+    MINUTE_INDEX_TO_SESSION_LABELS_START = T("2021-01-06")
+    MINUTE_INDEX_TO_SESSION_LABELS_END = T("2021-04-06")
 
-    TEST_START_END_FIRST = pd.Timestamp("2021-01-03", tz=UTC)
-    TEST_START_END_LAST = pd.Timestamp("2021-01-10", tz=UTC)
-    TEST_START_END_EXPECTED_FIRST = pd.Timestamp("2021-01-04", tz=UTC)
-    TEST_START_END_EXPECTED_LAST = pd.Timestamp("2021-01-08", tz=UTC)
+    TEST_START_END_FIRST = T("2021-01-03")
+    TEST_START_END_LAST = T("2021-01-10")
+    TEST_START_END_EXPECTED_FIRST = T("2021-01-04")
+    TEST_START_END_EXPECTED_LAST = T("2021-01-08")
 
     def test_regular_holidays(self):
         all_sessions = self.calendar.all_sessions

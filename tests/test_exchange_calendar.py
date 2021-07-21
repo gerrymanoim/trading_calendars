@@ -16,7 +16,9 @@ from __future__ import annotations
 from datetime import time
 from os.path import abspath, dirname, join
 from unittest import TestCase
+import re
 
+import pytest
 import numpy as np
 import pandas as pd
 import pandas.testing as tm
@@ -256,25 +258,25 @@ class ExchangeCalendarTestBase(object):
         cls.calendar = None
         cls.answers = None
 
-    def test_start_bound(self):
+    def test_bound_start(self):
         if self.START_BOUND is not None:
             cal = self.calendar_class(self.START_BOUND, self.today)
             self.assertIsInstance(cal, ExchangeCalendar)
-            with self.assertRaises(ValueError):
-                self.calendar_class(
-                    self.START_BOUND - pd.DateOffset(days=1), self.today
-                )
+            start = self.START_BOUND - pd.DateOffset(days=1)
+            with pytest.raises(ValueError, match=re.escape(f"{start}")):
+                self.calendar_class(start, self.today)
         else:
             # verify no bound imposed
             cal = self.calendar_class(pd.Timestamp("1902-01-01", tz="UTC"), self.today)
             self.assertIsInstance(cal, ExchangeCalendar)
 
-    def test_end_bound(self):
+    def test_bound_end(self):
         if self.END_BOUND is not None:
             cal = self.calendar_class(self.today, self.END_BOUND)
             self.assertIsInstance(cal, ExchangeCalendar)
-            with self.assertRaises(ValueError):
-                self.calendar_class(self.today, self.END_BOUND + pd.DateOffset(days=1))
+            end = self.END_BOUND + pd.DateOffset(days=1)
+            with pytest.raises(ValueError, match=re.escape(f"{end}")):
+                self.calendar_class(self.today, end)
         else:
             # verify no bound imposed
             cal = self.calendar_class(self.today, pd.Timestamp("2050-01-01", tz="UTC"))

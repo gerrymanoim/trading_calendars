@@ -2,8 +2,10 @@
 Tests for ExchangeCalendarDispatcher.
 """
 from unittest import TestCase
+import re
 
 import pandas as pd
+import pytest
 
 from exchange_calendars import ExchangeCalendar
 from exchange_calendars.calendar_utils import ExchangeCalendarDispatcher
@@ -136,7 +138,12 @@ class CalendarDispatcherTestCase(TestCase):
         self.assertEqual(cal.last_session, end)
 
         self.dispatcher.register_calendar("iepa_instance", cal)
-        with self.assertRaises(ValueError):
+        error_msg = (
+            f"Receieved constructor arguments `start` and/or `end`"
+            f" although calendar iepa_instance is registered as a specific"
+            f" instance of class {cal.__class__}, not as a calendar factory."
+        )
+        with pytest.raises(ValueError, match=re.escape(error_msg)):
             # Can only pass kwargs to registered factories (not calendar instances)
             self.dispatcher.get_calendar("iepa_instance", start=start)
 

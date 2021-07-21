@@ -208,7 +208,7 @@ class ExchangeCalendarDispatcher(object):
         **kwargs
             Kwargs to be passed to calendar factory. `**kwargs` can only be
             passed if `name` is registered as a calendar factory (either by
-            having being included to `calendar_factories` passed to the
+            having been included to `calendar_factories` passed to the
             dispatcher's constructor or having been subsequently registered
             via the `register_calendar_type` method).
 
